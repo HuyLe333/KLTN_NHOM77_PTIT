@@ -87,7 +87,7 @@ def main():
         event = session.Fetch_Trading_Data(
             realtime=False,
             tickers=tickers,
-            fields=["open", "high", "low", "close", "volume", "fn"],
+            fields=["open", "high", "low", "close", "volume", "fn", "bu", "sd", "fs", "fb"],
             adjusted=True,
             from_date=from_date_str,
             by="1d"
@@ -98,6 +98,12 @@ def main():
                 df_tickers_raw.rename(columns={'fn': 'foreign_net'}, inplace=True)
             else:
                 df_tickers_raw['foreign_net'] = 0.0
+            
+            for col in ['bu', 'sd', 'fs', 'fb']:
+                if col not in df_tickers_raw.columns:
+                    df_tickers_raw[col] = 0.0
+                else:
+                    df_tickers_raw[col] = df_tickers_raw[col].fillna(0.0)
         print(f"    OK Tickers data shape: {df_tickers_raw.shape}")
         
         # Fetch VNINDEX price
@@ -268,20 +274,25 @@ def main():
                 'atr_14': float(row['atr_14']),
                 'high_low': float(row['high_low']),
                 'market_return': float(row['market_return']),
-                'foreign_net': float(row.get('foreign_net', 0.0))
+                'foreign_net': float(row.get('foreign_net', 0.0)),
+                'bu': float(row.get('bu', 0.0)),
+                'sd': float(row.get('sd', 0.0)),
+                'fs': float(row.get('fs', 0.0)),
+                'fb': float(row.get('fb', 0.0))
             })
             
         # Get latest day row for prediction
         latest_row = df_features.iloc[-1]
         latest_date = latest_row['date']
         
-        # Features for model input (17 columns)
+        # Features for model input (21 columns)
         feature_cols_model = [
             'price_vs_sma50', 'volatility_20', 'volume_ratio_20',
             'return_3d', 'return_5d', 'return_10d', 'return_20d',
             'sma_50_LogReturn', 'volume_LogReturn',
             'PCA_Trend', 'PCA_Oscillators', 'PCA_MACD', 'PCA_ShortReturns',
-            'atr_14', 'high_low', 'market_return', 'foreign_net'
+            'atr_14', 'high_low', 'market_return', 'foreign_net',
+            'bu', 'sd', 'fs', 'fb'
         ]
         
         X_pred = np.array([[float(latest_row[f]) for f in feature_cols_model]])

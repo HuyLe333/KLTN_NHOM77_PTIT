@@ -23,11 +23,15 @@
       "atr_14": 0.032434,
       "high_low": 0.027031,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 360500.0,
+      "sd": 510764.0,
+      "fs": 0.0,
+      "fb": 0.0
     },
-    "test_accuracy": 0.5424,
+    "test_accuracy": 0.5091,
     "test_samples": 330,
-    "predictability": "high"
+    "predictability": "medium"
   },
   "ACB": {
     "ticker": "ACB",
@@ -53,9 +57,13 @@
       "atr_14": 0.018956,
       "high_low": 0.016512,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 2729600.0,
+      "sd": 3321600.0,
+      "fs": 1437000000.0,
+      "fb": 1504356000.0
     },
-    "test_accuracy": 0.5333,
+    "test_accuracy": 0.5455,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -83,7 +91,11 @@
       "atr_14": 0.038776,
       "high_low": 0.03308,
       "market_return": 0.001473,
-      "foreign_net": -10535000.0
+      "foreign_net": -10535000.0,
+      "bu": 473400.0,
+      "sd": 584100.0,
+      "fs": 190995000.0,
+      "fb": 131185000.0
     },
     "test_accuracy": 0.497,
     "test_samples": 330,
@@ -113,9 +125,13 @@
       "atr_14": 0.038895,
       "high_low": 0.034963,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 481800.0,
+      "sd": 620400.0,
+      "fs": 683920000.0,
+      "fb": 605760000.0
     },
-    "test_accuracy": 0.5,
+    "test_accuracy": 0.5152,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -143,9 +159,13 @@
       "atr_14": 0.035262,
       "high_low": 0.030309,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 907800.0,
+      "sd": 1135500.0,
+      "fs": 206375000.0,
+      "fb": 196175000.0
     },
-    "test_accuracy": 0.5182,
+    "test_accuracy": 0.5091,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -173,9 +193,13 @@
       "atr_14": 0.023637,
       "high_low": 0.019365,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 5100.0,
+      "sd": 7000.0,
+      "fs": 12460000.0,
+      "fb": 40320000.0
     },
-    "test_accuracy": 0.5061,
+    "test_accuracy": 0.5091,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -203,11 +227,15 @@
       "atr_14": 0.020498,
       "high_low": 0.016955,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 3300.0,
+      "sd": 2851.0,
+      "fs": 0.0,
+      "fb": 0.0
     },
-    "test_accuracy": 0.5212,
+    "test_accuracy": 0.497,
     "test_samples": 330,
-    "predictability": "medium"
+    "predictability": "low"
   },
   "BAF": {
     "ticker": "BAF",
@@ -233,9 +261,13 @@
       "atr_14": 0.027355,
       "high_low": 0.024978,
       "market_return": 0.00115,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 1108900.0,
+      "sd": 1170350.0,
+      "fs": 654010000.0,
+      "fb": 407697500.0
     },
-    "test_accuracy": 0.4727,
+    "test_accuracy": 0.4515,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -263,9 +295,13 @@
       "atr_14": 0.029018,
       "high_low": 0.024489,
       "market_return": 0.001473,
-      "foreign_net": 291110000.0
+      "foreign_net": 291110000.0,
+      "bu": 73400.0,
+      "sd": 127200.0,
+      "fs": 1419220000.0,
+      "fb": 2433816500.0
     },
-    "test_accuracy": 0.5455,
+    "test_accuracy": 0.5485,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -293,7 +329,11 @@
       "atr_14": 0.025597,
       "high_low": 0.021629,
       "market_return": 0.001473,
-      "foreign_net": -1470915000.0
+      "foreign_net": -1470915000.0,
+      "bu": 801600.0,
+      "sd": 976300.0,
+      "fs": 12021085000.0,
+      "fb": 8550390000.0
     },
     "test_accuracy": 0.5152,
     "test_samples": 330,
@@ -323,11 +363,15 @@
       "atr_14": 0.040517,
       "high_low": 0.036162,
       "market_return": 0.001403,
-      "foreign_net": -28440000.0
+      "foreign_net": -28440000.0,
+      "bu": 318300.0,
+      "sd": 394600.0,
+      "fs": 561735000.0,
+      "fb": 451865000.0
     },
-    "test_accuracy": 0.5091,
+    "test_accuracy": 0.4758,
     "test_samples": 330,
-    "predictability": "medium"
+    "predictability": "low"
   },
   "BSR": {
     "ticker": "BSR",
@@ -353,9 +397,13 @@
       "atr_14": 0.039987,
       "high_low": 0.033896,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 2899966.0,
+      "sd": 3466165.0,
+      "fs": 434400000.0,
+      "fb": 359910000.0
     },
-    "test_accuracy": 0.5839,
+    "test_accuracy": 0.5807,
     "test_samples": 322,
     "predictability": "high"
   },
@@ -383,9 +431,13 @@
       "atr_14": 0.034439,
       "high_low": 0.035714,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 9304.0,
+      "sd": 8200.0,
+      "fs": 0.0,
+      "fb": 0.0
     },
-    "test_accuracy": 0.5424,
+    "test_accuracy": 0.5879,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -413,7 +465,11 @@
       "atr_14": 0.041698,
       "high_low": 0.036733,
       "market_return": 0.001473,
-      "foreign_net": -7670000.0
+      "foreign_net": -7670000.0,
+      "bu": 187000.0,
+      "sd": 214000.0,
+      "fs": 212910000.0,
+      "fb": 44620000.0
     },
     "test_accuracy": 0.4697,
     "test_samples": 330,
@@ -443,11 +499,15 @@
       "atr_14": 0.06044,
       "high_low": 0.055556,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 3177731.0,
+      "sd": 3324200.0,
+      "fs": 404420000.0,
+      "fb": 371520000.0
     },
-    "test_accuracy": 0.4848,
+    "test_accuracy": 0.5273,
     "test_samples": 330,
-    "predictability": "low"
+    "predictability": "medium"
   },
   "CII": {
     "ticker": "CII",
@@ -473,9 +533,13 @@
       "atr_14": 0.039571,
       "high_low": 0.035374,
       "market_return": 0.001473,
-      "foreign_net": -205570000.0
+      "foreign_net": -205570000.0,
+      "bu": 2651400.0,
+      "sd": 3051400.0,
+      "fs": 1691260000.0,
+      "fb": 1131320000.0
     },
-    "test_accuracy": 0.5788,
+    "test_accuracy": 0.5727,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -503,9 +567,13 @@
       "atr_14": 0.033666,
       "high_low": 0.029364,
       "market_return": 0.001473,
-      "foreign_net": 99195000.0
+      "foreign_net": 99195000.0,
+      "bu": 46600.0,
+      "sd": 58200.0,
+      "fs": 559330000.0,
+      "fb": 736010000.0
     },
-    "test_accuracy": 0.4939,
+    "test_accuracy": 0.4636,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -533,9 +601,13 @@
       "atr_14": 0.025059,
       "high_low": 0.021538,
       "market_return": 0.001473,
-      "foreign_net": -1003555000.0
+      "foreign_net": -1003555000.0,
+      "bu": 2492200.0,
+      "sd": 3070800.0,
+      "fs": 27703975000.0,
+      "fb": 26040087550.0
     },
-    "test_accuracy": 0.4818,
+    "test_accuracy": 0.4879,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -563,7 +635,11 @@
       "atr_14": 0.042179,
       "high_low": 0.03732,
       "market_return": 0.001473,
-      "foreign_net": -79115000.0
+      "foreign_net": -79115000.0,
+      "bu": 532000.0,
+      "sd": 626000.0,
+      "fs": 644925000.0,
+      "fb": 371212000.0
     },
     "test_accuracy": 0.4545,
     "test_samples": 330,
@@ -593,9 +669,13 @@
       "atr_14": 0.033875,
       "high_low": 0.03025,
       "market_return": 0.001473,
-      "foreign_net": -163740000.0
+      "foreign_net": -163740000.0,
+      "bu": 1716800.0,
+      "sd": 2064900.0,
+      "fs": 1800805000.0,
+      "fb": 1279540000.0
     },
-    "test_accuracy": 0.4697,
+    "test_accuracy": 0.4939,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -623,9 +703,13 @@
       "atr_14": 0.035714,
       "high_low": 0.031207,
       "market_return": 0.001473,
-      "foreign_net": -472920000.0
+      "foreign_net": -472920000.0,
+      "bu": 1501500.0,
+      "sd": 1837800.0,
+      "fs": 4350110000.0,
+      "fb": 3259660000.0
     },
-    "test_accuracy": 0.4758,
+    "test_accuracy": 0.4879,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -653,9 +737,13 @@
       "atr_14": 0.044255,
       "high_low": 0.040404,
       "market_return": 0.001473,
-      "foreign_net": -67830000.0
+      "foreign_net": -67830000.0,
+      "bu": 4511700.0,
+      "sd": 5030900.0,
+      "fs": 3634320000.0,
+      "fb": 3094235000.0
     },
-    "test_accuracy": 0.4545,
+    "test_accuracy": 0.4515,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -683,9 +771,13 @@
       "atr_14": 0.030888,
       "high_low": 0.027139,
       "market_return": 0.001473,
-      "foreign_net": -965990000.0
+      "foreign_net": -965990000.0,
+      "bu": 1160000.0,
+      "sd": 1487900.0,
+      "fs": 5797080000.0,
+      "fb": 3866720000.0
     },
-    "test_accuracy": 0.4545,
+    "test_accuracy": 0.4788,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -713,9 +805,13 @@
       "atr_14": 0.042311,
       "high_low": 0.038876,
       "market_return": 0.001473,
-      "foreign_net": -785805000.0
+      "foreign_net": -785805000.0,
+      "bu": 4882300.0,
+      "sd": 5525400.0,
+      "fs": 11662765000.0,
+      "fb": 10709045000.0
     },
-    "test_accuracy": 0.5121,
+    "test_accuracy": 0.5061,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -743,9 +839,13 @@
       "atr_14": 0.032294,
       "high_low": 0.027627,
       "market_return": 0.001473,
-      "foreign_net": -136525000.0
+      "foreign_net": -136525000.0,
+      "bu": 1387000.0,
+      "sd": 1953200.0,
+      "fs": 2190680000.0,
+      "fb": 965385000.0
     },
-    "test_accuracy": 0.5212,
+    "test_accuracy": 0.5242,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -773,9 +873,13 @@
       "atr_14": 0.036772,
       "high_low": 0.032738,
       "market_return": 0.001473,
-      "foreign_net": -13885000.0
+      "foreign_net": -13885000.0,
+      "bu": 187900.0,
+      "sd": 244500.0,
+      "fs": 267795000.0,
+      "fb": 182945000.0
     },
-    "test_accuracy": 0.5545,
+    "test_accuracy": 0.5788,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -803,11 +907,15 @@
       "atr_14": 0.021658,
       "high_low": 0.019251,
       "market_return": 0.001473,
-      "foreign_net": -15040000.0
+      "foreign_net": -15040000.0,
+      "bu": 937000.0,
+      "sd": 1004700.0,
+      "fs": 68961032800.0,
+      "fb": 60941361900.0
     },
-    "test_accuracy": 0.5152,
+    "test_accuracy": 0.5455,
     "test_samples": 330,
-    "predictability": "medium"
+    "predictability": "high"
   },
   "GAS": {
     "ticker": "GAS",
@@ -833,11 +941,15 @@
       "atr_14": 0.022424,
       "high_low": 0.019953,
       "market_return": 0.001473,
-      "foreign_net": -1283041500.0
+      "foreign_net": -1283041500.0,
+      "bu": 290200.0,
+      "sd": 369400.0,
+      "fs": 8218690000.0,
+      "fb": 5492340000.0
     },
-    "test_accuracy": 0.5121,
+    "test_accuracy": 0.5455,
     "test_samples": 330,
-    "predictability": "medium"
+    "predictability": "high"
   },
   "GMD": {
     "ticker": "GMD",
@@ -863,11 +975,15 @@
       "atr_14": 0.02959,
       "high_low": 0.025862,
       "market_return": 0.001473,
-      "foreign_net": 426170000.0
+      "foreign_net": 426170000.0,
+      "bu": 485300.0,
+      "sd": 576500.0,
+      "fs": 10610400000.0,
+      "fb": 11782205000.0
     },
-    "test_accuracy": 0.5242,
+    "test_accuracy": 0.5576,
     "test_samples": 330,
-    "predictability": "medium"
+    "predictability": "high"
   },
   "GVR": {
     "ticker": "GVR",
@@ -893,9 +1009,13 @@
       "atr_14": 0.036557,
       "high_low": 0.031835,
       "market_return": 0.001473,
-      "foreign_net": -152730000.0
+      "foreign_net": -152730000.0,
+      "bu": 1213800.0,
+      "sd": 1492400.0,
+      "fs": 1929790000.0,
+      "fb": 1545345000.0
     },
-    "test_accuracy": 0.5394,
+    "test_accuracy": 0.5636,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -923,9 +1043,13 @@
       "atr_14": 0.03803,
       "high_low": 0.034843,
       "market_return": 0.001473,
-      "foreign_net": -27088000.0
+      "foreign_net": -27088000.0,
+      "bu": 4156500.0,
+      "sd": 4956600.0,
+      "fs": 978255000.0,
+      "fb": 839960000.0
     },
-    "test_accuracy": 0.5545,
+    "test_accuracy": 0.5727,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -953,9 +1077,13 @@
       "atr_14": 0.038107,
       "high_low": 0.033531,
       "market_return": 0.001473,
-      "foreign_net": -301420000.0
+      "foreign_net": -301420000.0,
+      "bu": 763700.0,
+      "sd": 867000.0,
+      "fs": 2705720000.0,
+      "fb": 1975675000.0
     },
-    "test_accuracy": 0.5697,
+    "test_accuracy": 0.5606,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -983,9 +1111,13 @@
       "atr_14": 0.021486,
       "high_low": 0.008771,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 800.0,
+      "sd": 500.0,
+      "fs": 0.0,
+      "fb": 0.0
     },
-    "test_accuracy": 0.5121,
+    "test_accuracy": 0.5152,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -1013,11 +1145,15 @@
       "atr_14": 0.033993,
       "high_low": 0.030248,
       "market_return": 0.001473,
-      "foreign_net": -869475000.0
+      "foreign_net": -869475000.0,
+      "bu": 2527800.0,
+      "sd": 2822000.0,
+      "fs": 6323523750.0,
+      "fb": 4724117500.0
     },
-    "test_accuracy": 0.4879,
+    "test_accuracy": 0.5152,
     "test_samples": 330,
-    "predictability": "low"
+    "predictability": "medium"
   },
   "HDB": {
     "ticker": "HDB",
@@ -1043,9 +1179,13 @@
       "atr_14": 0.025333,
       "high_low": 0.022401,
       "market_return": 0.001473,
-      "foreign_net": -429950000.0
+      "foreign_net": -429950000.0,
+      "bu": 2851600.0,
+      "sd": 2446700.0,
+      "fs": 16707830000.0,
+      "fb": 16056091600.0
     },
-    "test_accuracy": 0.5515,
+    "test_accuracy": 0.5424,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -1073,9 +1213,13 @@
       "atr_14": 0.034774,
       "high_low": 0.030962,
       "market_return": 0.001473,
-      "foreign_net": 66110000.0
+      "foreign_net": 66110000.0,
+      "bu": 672500.0,
+      "sd": 838400.0,
+      "fs": 3409955000.0,
+      "fb": 3604950000.0
     },
-    "test_accuracy": 0.5424,
+    "test_accuracy": 0.5333,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -1103,9 +1247,13 @@
       "atr_14": 0.024626,
       "high_low": 0.022013,
       "market_return": 0.001473,
-      "foreign_net": -10845728100.0
+      "foreign_net": -10845728100.0,
+      "bu": 9231600.0,
+      "sd": 10131200.0,
+      "fs": 83666700500.0,
+      "fb": 74429635000.0
     },
-    "test_accuracy": 0.5303,
+    "test_accuracy": 0.5515,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -1133,9 +1281,13 @@
       "atr_14": 0.034863,
       "high_low": 0.031455,
       "market_return": 0.001473,
-      "foreign_net": -685300000.0
+      "foreign_net": -685300000.0,
+      "bu": 3432500.0,
+      "sd": 3937000.0,
+      "fs": 5220770000.0,
+      "fb": 4389135000.0
     },
-    "test_accuracy": 0.4667,
+    "test_accuracy": 0.4848,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -1163,11 +1315,15 @@
       "atr_14": 0.048263,
       "high_low": 0.042556,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 1154900.0,
+      "sd": 1336500.0,
+      "fs": 75720000.0,
+      "fb": 63460000.0
     },
-    "test_accuracy": 0.4788,
+    "test_accuracy": 0.503,
     "test_samples": 330,
-    "predictability": "low"
+    "predictability": "medium"
   },
   "HVN": {
     "ticker": "HVN",
@@ -1193,11 +1349,15 @@
       "atr_14": 0.032253,
       "high_low": 0.027403,
       "market_return": 0.001473,
-      "foreign_net": -10370000.0
+      "foreign_net": -10370000.0,
+      "bu": 508200.0,
+      "sd": 617800.0,
+      "fs": 655820000.0,
+      "fb": 465045000.0
     },
-    "test_accuracy": 0.5091,
+    "test_accuracy": 0.5364,
     "test_samples": 330,
-    "predictability": "medium"
+    "predictability": "high"
   },
   "IDC": {
     "ticker": "IDC",
@@ -1223,9 +1383,13 @@
       "atr_14": 0.038726,
       "high_low": 0.033333,
       "market_return": 0.001473,
-      "foreign_net": 35900000.0
+      "foreign_net": 35900000.0,
+      "bu": 799600.0,
+      "sd": 941300.0,
+      "fs": 1345130000.0,
+      "fb": 3834337000.0
     },
-    "test_accuracy": 0.5485,
+    "test_accuracy": 0.5455,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -1253,9 +1417,13 @@
       "atr_14": 0.019701,
       "high_low": 0.016424,
       "market_return": 0.001473,
-      "foreign_net": -639270000.0
+      "foreign_net": -639270000.0,
+      "bu": 523100.0,
+      "sd": 86400.0,
+      "fs": 1293890000.0,
+      "fb": 344540000.0
     },
-    "test_accuracy": 0.5788,
+    "test_accuracy": 0.5485,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -1283,9 +1451,13 @@
       "atr_14": 0.028067,
       "high_low": 0.024324,
       "market_return": 0.001473,
-      "foreign_net": -843305000.0
+      "foreign_net": -843305000.0,
+      "bu": 878800.0,
+      "sd": 1026300.0,
+      "fs": 13948515000.0,
+      "fb": 12767535000.0
     },
-    "test_accuracy": 0.5424,
+    "test_accuracy": 0.5485,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -1313,9 +1485,13 @@
       "atr_14": 0.037513,
       "high_low": 0.029392,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 20500.0,
+      "sd": 25810.0,
+      "fs": 0.0,
+      "fb": 0.0
     },
-    "test_accuracy": 0.5772,
+    "test_accuracy": 0.5895,
     "test_samples": 324,
     "predictability": "high"
   },
@@ -1343,9 +1519,13 @@
       "atr_14": 0.044974,
       "high_low": 0.039088,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 1250000.0,
+      "sd": 1549700.0,
+      "fs": 131355000.0,
+      "fb": 107730000.0
     },
-    "test_accuracy": 0.5182,
+    "test_accuracy": 0.5,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -1373,9 +1553,13 @@
       "atr_14": 0.031552,
       "high_low": 0.026936,
       "market_return": 0.001473,
-      "foreign_net": -254665000.0
+      "foreign_net": -254665000.0,
+      "bu": 1461800.0,
+      "sd": 1899500.0,
+      "fs": 3073667100.0,
+      "fb": 1334965000.0
     },
-    "test_accuracy": 0.5242,
+    "test_accuracy": 0.5273,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -1403,11 +1587,15 @@
       "atr_14": 0.022574,
       "high_low": 0.020245,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 5346300.0,
+      "sd": 6236700.0,
+      "fs": 22477904000.0,
+      "fb": 22792570000.0
     },
-    "test_accuracy": 0.4879,
+    "test_accuracy": 0.5121,
     "test_samples": 330,
-    "predictability": "low"
+    "predictability": "medium"
   },
   "MBS": {
     "ticker": "MBS",
@@ -1433,11 +1621,15 @@
       "atr_14": 0.044779,
       "high_low": 0.039733,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 1195414.0,
+      "sd": 1329809.0,
+      "fs": 136478700.0,
+      "fb": 101400000.0
     },
-    "test_accuracy": 0.503,
+    "test_accuracy": 0.4909,
     "test_samples": 330,
-    "predictability": "medium"
+    "predictability": "low"
   },
   "MCH": {
     "ticker": "MCH",
@@ -1463,9 +1655,13 @@
       "atr_14": 0.025759,
       "high_low": 0.020181,
       "market_return": 0.001434,
-      "foreign_net": 129275000.0
+      "foreign_net": 129275000.0,
+      "bu": 17300.0,
+      "sd": 14250.0,
+      "fs": 166400000.0,
+      "fb": 668275000.0
     },
-    "test_accuracy": 0.5785,
+    "test_accuracy": 0.5754,
     "test_samples": 325,
     "predictability": "high"
   },
@@ -1493,9 +1689,13 @@
       "atr_14": 0.025079,
       "high_low": 0.021206,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 2093900.0,
+      "sd": 2493800.0,
+      "fs": 231900000.0,
+      "fb": 170590000.0
     },
-    "test_accuracy": 0.5303,
+    "test_accuracy": 0.5364,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -1523,9 +1723,13 @@
       "atr_14": 0.028069,
       "high_low": 0.024524,
       "market_return": 0.001473,
-      "foreign_net": -2372744900.0
+      "foreign_net": -2372744900.0,
+      "bu": 943000.0,
+      "sd": 940500.0,
+      "fs": 39377104600.0,
+      "fb": 36736675000.0
     },
-    "test_accuracy": 0.5242,
+    "test_accuracy": 0.5212,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -1553,9 +1757,13 @@
       "atr_14": 0.026726,
       "high_low": 0.024096,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 1739600.0,
+      "sd": 2076700.0,
+      "fs": 58277700000.0,
+      "fb": 56985338400.0
     },
-    "test_accuracy": 0.5242,
+    "test_accuracy": 0.5121,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -1583,9 +1791,13 @@
       "atr_14": 0.038485,
       "high_low": 0.033675,
       "market_return": 0.001473,
-      "foreign_net": -439960000.0
+      "foreign_net": -439960000.0,
+      "bu": 2942900.0,
+      "sd": 3491100.0,
+      "fs": 2787587000.0,
+      "fb": 1835715000.0
     },
-    "test_accuracy": 0.4697,
+    "test_accuracy": 0.497,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -1613,9 +1825,13 @@
       "atr_14": 0.034226,
       "high_low": 0.030768,
       "market_return": 0.001473,
-      "foreign_net": -41280000.0
+      "foreign_net": -41280000.0,
+      "bu": 997100.0,
+      "sd": 1177200.0,
+      "fs": 11246670000.0,
+      "fb": 10085575000.0
     },
-    "test_accuracy": 0.497,
+    "test_accuracy": 0.4818,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -1643,9 +1859,13 @@
       "atr_14": 0.051634,
       "high_low": 0.045163,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 258138.0,
+      "sd": 247804.0,
+      "fs": 0.0,
+      "fb": 0.0
     },
-    "test_accuracy": 0.4667,
+    "test_accuracy": 0.4606,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -1673,9 +1893,13 @@
       "atr_14": 0.037994,
       "high_low": 0.032258,
       "market_return": 0.001473,
-      "foreign_net": -9060000.0
+      "foreign_net": -9060000.0,
+      "bu": 84105.0,
+      "sd": 98700.0,
+      "fs": 47700000.0,
+      "fb": 0.0
     },
-    "test_accuracy": 0.5,
+    "test_accuracy": 0.503,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -1703,9 +1927,13 @@
       "atr_14": 0.034903,
       "high_low": 0.029316,
       "market_return": 0.001473,
-      "foreign_net": -1835280000.0
+      "foreign_net": -1835280000.0,
+      "bu": 3474400.0,
+      "sd": 4498000.0,
+      "fs": 12957350000.0,
+      "fb": 8695765000.0
     },
-    "test_accuracy": 0.5152,
+    "test_accuracy": 0.5121,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -1733,9 +1961,13 @@
       "atr_14": 0.024926,
       "high_low": 0.021424,
       "market_return": 0.001473,
-      "foreign_net": -150595000.0
+      "foreign_net": -150595000.0,
+      "bu": 764600.0,
+      "sd": 1044200.0,
+      "fs": 1228450000.0,
+      "fb": 712621700.0
     },
-    "test_accuracy": 0.5455,
+    "test_accuracy": 0.5424,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -1763,11 +1995,15 @@
       "atr_14": 0.032517,
       "high_low": 0.029064,
       "market_return": 0.001469,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 493600.0,
+      "sd": 613400.0,
+      "fs": 1111862500.0,
+      "fb": 1257685000.0
     },
-    "test_accuracy": 0.5152,
+    "test_accuracy": 0.5394,
     "test_samples": 330,
-    "predictability": "medium"
+    "predictability": "high"
   },
   "PDR": {
     "ticker": "PDR",
@@ -1793,9 +2029,13 @@
       "atr_14": 0.034903,
       "high_low": 0.031194,
       "market_return": 0.001473,
-      "foreign_net": -47940000.0
+      "foreign_net": -47940000.0,
+      "bu": 2624300.0,
+      "sd": 3081000.0,
+      "fs": 4726914050.0,
+      "fb": 4614550000.0
     },
-    "test_accuracy": 0.4818,
+    "test_accuracy": 0.4879,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -1823,9 +2063,13 @@
       "atr_14": 0.03411,
       "high_low": 0.020893,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 201.0,
+      "sd": 7.0,
+      "fs": 0.0,
+      "fb": 0.0
     },
-    "test_accuracy": 0.603,
+    "test_accuracy": 0.6,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -1853,9 +2097,13 @@
       "atr_14": 0.032919,
       "high_low": 0.027139,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 5300.0,
+      "sd": 8000.0,
+      "fs": 0.0,
+      "fb": 0.0
     },
-    "test_accuracy": 0.5576,
+    "test_accuracy": 0.5364,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -1883,9 +2131,13 @@
       "atr_14": 0.029382,
       "high_low": 0.0261,
       "market_return": 0.001473,
-      "foreign_net": -11564200.0
+      "foreign_net": -11564200.0,
+      "bu": 197100.0,
+      "sd": 234800.0,
+      "fs": 991708300.0,
+      "fb": 1133515000.0
     },
-    "test_accuracy": 0.5788,
+    "test_accuracy": 0.5455,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -1913,9 +2165,13 @@
       "atr_14": 0.024908,
       "high_low": 0.021645,
       "market_return": 0.001473,
-      "foreign_net": -558835000.0
+      "foreign_net": -558835000.0,
+      "bu": 498000.0,
+      "sd": 658700.0,
+      "fs": 4034630000.0,
+      "fb": 3239155000.0
     },
-    "test_accuracy": 0.5091,
+    "test_accuracy": 0.5242,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -1943,9 +2199,13 @@
       "atr_14": 0.022779,
       "high_low": 0.020212,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 230400.0,
+      "sd": 263200.0,
+      "fs": 11005100000.0,
+      "fb": 11804450000.0
     },
-    "test_accuracy": 0.4848,
+    "test_accuracy": 0.4939,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -1973,9 +2233,13 @@
       "atr_14": 0.035972,
       "high_low": 0.026226,
       "market_return": 0.001469,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 54200.0,
+      "sd": 66050.0,
+      "fs": 0.0,
+      "fb": 0.0
     },
-    "test_accuracy": 0.4303,
+    "test_accuracy": 0.4212,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -2003,9 +2267,13 @@
       "atr_14": 0.029764,
       "high_low": 0.026906,
       "market_return": 0.001473,
-      "foreign_net": -519140000.0
+      "foreign_net": -519140000.0,
+      "bu": 3177500.0,
+      "sd": 3926800.0,
+      "fs": 4005720000.0,
+      "fb": 3323230000.0
     },
-    "test_accuracy": 0.5212,
+    "test_accuracy": 0.5242,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -2033,9 +2301,13 @@
       "atr_14": 0.037775,
       "high_low": 0.032322,
       "market_return": 0.001473,
-      "foreign_net": -468910000.0
+      "foreign_net": -468910000.0,
+      "bu": 2324200.0,
+      "sd": 2701200.0,
+      "fs": 4889189300.0,
+      "fb": 4023965000.0
     },
-    "test_accuracy": 0.5152,
+    "test_accuracy": 0.5091,
     "test_samples": 330,
     "predictability": "medium"
   },
@@ -2063,11 +2335,15 @@
       "atr_14": 0.043358,
       "high_low": 0.036864,
       "market_return": 0.001473,
-      "foreign_net": 11430000.0
+      "foreign_net": 11430000.0,
+      "bu": 2358504.0,
+      "sd": 2535500.0,
+      "fs": 3114840000.0,
+      "fb": 3677930000.0
     },
-    "test_accuracy": 0.5152,
+    "test_accuracy": 0.4788,
     "test_samples": 330,
-    "predictability": "medium"
+    "predictability": "low"
   },
   "PVT": {
     "ticker": "PVT",
@@ -2093,9 +2369,13 @@
       "atr_14": 0.032847,
       "high_low": 0.028708,
       "market_return": 0.001473,
-      "foreign_net": -404710000.0
+      "foreign_net": -404710000.0,
+      "bu": 1229600.0,
+      "sd": 1503700.0,
+      "fs": 2924180000.0,
+      "fb": 2281405000.0
     },
-    "test_accuracy": 0.5364,
+    "test_accuracy": 0.5424,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -2123,11 +2403,15 @@
       "atr_14": 0.024367,
       "high_low": 0.021523,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 223300.0,
+      "sd": 279800.0,
+      "fs": 0.0,
+      "fb": 0.0
     },
-    "test_accuracy": 0.5152,
+    "test_accuracy": 0.4727,
     "test_samples": 330,
-    "predictability": "medium"
+    "predictability": "low"
   },
   "SAB": {
     "ticker": "SAB",
@@ -2153,9 +2437,13 @@
       "atr_14": 0.021318,
       "high_low": 0.017442,
       "market_return": 0.001473,
-      "foreign_net": -1667550000.0
+      "foreign_net": -1667550000.0,
+      "bu": 126400.0,
+      "sd": 149400.0,
+      "fs": 12120570000.0,
+      "fb": 9078850000.0
     },
-    "test_accuracy": 0.5333,
+    "test_accuracy": 0.5636,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -2183,7 +2471,11 @@
       "atr_14": 0.019745,
       "high_low": 0.016036,
       "market_return": 0.001473,
-      "foreign_net": -103844500.0
+      "foreign_net": -103844500.0,
+      "bu": 20200.0,
+      "sd": 20700.0,
+      "fs": 1011270000.0,
+      "fb": 795020000.0
     },
     "test_accuracy": 0.5727,
     "test_samples": 330,
@@ -2213,9 +2505,13 @@
       "atr_14": 0.02836,
       "high_low": 0.025717,
       "market_return": 0.001434,
-      "foreign_net": -141061900.0
+      "foreign_net": -141061900.0,
+      "bu": 7695500.0,
+      "sd": 8405850.0,
+      "fs": 4834150175.0,
+      "fb": 4254077500.0
     },
-    "test_accuracy": 0.6061,
+    "test_accuracy": 0.5485,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -2243,11 +2539,15 @@
       "atr_14": 0.052101,
       "high_low": 0.044643,
       "market_return": 0.001473,
-      "foreign_net": -35600000.0
+      "foreign_net": -35600000.0,
+      "bu": 5640500.0,
+      "sd": 5894400.0,
+      "fs": 969081000.0,
+      "fb": 676126400.0
     },
-    "test_accuracy": 0.4939,
+    "test_accuracy": 0.5152,
     "test_samples": 330,
-    "predictability": "low"
+    "predictability": "medium"
   },
   "SSI": {
     "ticker": "SSI",
@@ -2273,11 +2573,15 @@
       "atr_14": 0.032773,
       "high_low": 0.028442,
       "market_return": 0.001473,
-      "foreign_net": -6068453450.0
+      "foreign_net": -6068453450.0,
+      "bu": 6955400.0,
+      "sd": 7497200.0,
+      "fs": 33667636500.0,
+      "fb": 28589700000.0
     },
-    "test_accuracy": 0.5091,
+    "test_accuracy": 0.5455,
     "test_samples": 330,
-    "predictability": "medium"
+    "predictability": "high"
   },
   "STB": {
     "ticker": "STB",
@@ -2303,9 +2607,13 @@
       "atr_14": 0.029478,
       "high_low": 0.026119,
       "market_return": 0.001473,
-      "foreign_net": -745945000.0
+      "foreign_net": -745945000.0,
+      "bu": 5946700.0,
+      "sd": 6538600.0,
+      "fs": 33492480000.0,
+      "fb": 35480380000.0
     },
-    "test_accuracy": 0.4758,
+    "test_accuracy": 0.4727,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -2333,11 +2641,15 @@
       "atr_14": 0.024077,
       "high_low": 0.021072,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 3485800.0,
+      "sd": 3910100.0,
+      "fs": 10080000000.0,
+      "fb": 11040000000.0
     },
-    "test_accuracy": 0.5545,
+    "test_accuracy": 0.5212,
     "test_samples": 330,
-    "predictability": "high"
+    "predictability": "medium"
   },
   "TLH": {
     "ticker": "TLH",
@@ -2363,11 +2675,15 @@
       "atr_14": 0.037375,
       "high_low": 0.033386,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 287300.0,
+      "sd": 331200.0,
+      "fs": 49053000.0,
+      "fb": 47231000.0
     },
-    "test_accuracy": 0.5394,
+    "test_accuracy": 0.5273,
     "test_samples": 330,
-    "predictability": "high"
+    "predictability": "medium"
   },
   "TNG": {
     "ticker": "TNG",
@@ -2393,11 +2709,15 @@
       "atr_14": 0.043368,
       "high_low": 0.03759,
       "market_return": 0.001473,
-      "foreign_net": 1900000.0
+      "foreign_net": 1900000.0,
+      "bu": 734795.0,
+      "sd": 854768.0,
+      "fs": 351650000.0,
+      "fb": 458640000.0
     },
-    "test_accuracy": 0.5455,
+    "test_accuracy": 0.5242,
     "test_samples": 330,
-    "predictability": "high"
+    "predictability": "medium"
   },
   "TPB": {
     "ticker": "TPB",
@@ -2423,9 +2743,13 @@
       "atr_14": 0.026975,
       "high_low": 0.024313,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 2645500.0,
+      "sd": 2812800.0,
+      "fs": 3068510000.0,
+      "fb": 3100765000.0
     },
-    "test_accuracy": 0.5727,
+    "test_accuracy": 0.5788,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -2453,9 +2777,13 @@
       "atr_14": 0.019672,
       "high_low": 0.017336,
       "market_return": 0.001473,
-      "foreign_net": -8321410000.0
+      "foreign_net": -8321410000.0,
+      "bu": 603000.0,
+      "sd": 616400.0,
+      "fs": 50273829800.0,
+      "fb": 42599690000.0
     },
-    "test_accuracy": 0.5455,
+    "test_accuracy": 0.5394,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -2483,9 +2811,13 @@
       "atr_14": 0.036459,
       "high_low": 0.031599,
       "market_return": 0.001473,
-      "foreign_net": -312892900.0
+      "foreign_net": -312892900.0,
+      "bu": 2065100.0,
+      "sd": 2381200.0,
+      "fs": 10313130000.0,
+      "fb": 9252155000.0
     },
-    "test_accuracy": 0.4879,
+    "test_accuracy": 0.4788,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -2513,9 +2845,13 @@
       "atr_14": 0.026727,
       "high_low": 0.022369,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 46400.0,
+      "sd": 55500.0,
+      "fs": 117600000.0,
+      "fb": 67410000.0
     },
-    "test_accuracy": 0.5788,
+    "test_accuracy": 0.5727,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -2543,11 +2879,15 @@
       "atr_14": 0.037503,
       "high_low": 0.033769,
       "market_return": 0.001473,
-      "foreign_net": -398220000.0
+      "foreign_net": -398220000.0,
+      "bu": 374300.0,
+      "sd": 457500.0,
+      "fs": 2211520000.0,
+      "fb": 1672045000.0
     },
-    "test_accuracy": 0.5303,
+    "test_accuracy": 0.5182,
     "test_samples": 330,
-    "predictability": "high"
+    "predictability": "medium"
   },
   "VGS": {
     "ticker": "VGS",
@@ -2573,11 +2913,15 @@
       "atr_14": 0.050948,
       "high_low": 0.04469,
       "market_return": 0.001473,
-      "foreign_net": 0.0
+      "foreign_net": 0.0,
+      "bu": 273291.0,
+      "sd": 311497.0,
+      "fs": 4780000.0,
+      "fb": 5410000.0
     },
-    "test_accuracy": 0.4848,
+    "test_accuracy": 0.5394,
     "test_samples": 330,
-    "predictability": "low"
+    "predictability": "high"
   },
   "VHM": {
     "ticker": "VHM",
@@ -2603,9 +2947,13 @@
       "atr_14": 0.028356,
       "high_low": 0.025467,
       "market_return": 0.001473,
-      "foreign_net": -10784612400.0
+      "foreign_net": -10784612400.0,
+      "bu": 1952900.0,
+      "sd": 2125000.0,
+      "fs": 69729487200.0,
+      "fb": 61224770000.0
     },
-    "test_accuracy": 0.4636,
+    "test_accuracy": 0.4727,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -2633,9 +2981,13 @@
       "atr_14": 0.028645,
       "high_low": 0.024804,
       "market_return": 0.001473,
-      "foreign_net": -6509722150.0
+      "foreign_net": -6509722150.0,
+      "bu": 925100.0,
+      "sd": 1017700.0,
+      "fs": 37666498000.0,
+      "fb": 27365420000.0
     },
-    "test_accuracy": 0.4697,
+    "test_accuracy": 0.4848,
     "test_samples": 330,
     "predictability": "low"
   },
@@ -2663,9 +3015,13 @@
       "atr_14": 0.021639,
       "high_low": 0.019335,
       "market_return": 0.001473,
-      "foreign_net": -1100751100.0
+      "foreign_net": -1100751100.0,
+      "bu": 471400.0,
+      "sd": 209200.0,
+      "fs": 6981340000.0,
+      "fb": 5001600000.0
     },
-    "test_accuracy": 0.5424,
+    "test_accuracy": 0.5485,
     "test_samples": 330,
     "predictability": "high"
   },
@@ -2693,11 +3049,15 @@
       "atr_14": 0.037631,
       "high_low": 0.034069,
       "market_return": 0.001377,
-      "foreign_net": -1493181200.0
+      "foreign_net": -1493181200.0,
+      "bu": 5280200.0,
+      "sd": 6239000.0,
+      "fs": 14258555700.0,
+      "fb": 12341330000.0
     },
-    "test_accuracy": 0.4939,
+    "test_accuracy": 0.5061,
     "test_samples": 330,
-    "predictability": "low"
+    "predictability": "medium"
   },
   "VNM": {
     "ticker": "VNM",
@@ -2723,11 +3083,15 @@
       "atr_14": 0.018003,
       "high_low": 0.015625,
       "market_return": 0.001473,
-      "foreign_net": -6337002000.0
+      "foreign_net": -6337002000.0,
+      "bu": 1192700.0,
+      "sd": 1342000.0,
+      "fs": 55095412800.0,
+      "fb": 49695712800.0
     },
-    "test_accuracy": 0.5364,
+    "test_accuracy": 0.5273,
     "test_samples": 330,
-    "predictability": "high"
+    "predictability": "medium"
   },
   "VOS": {
     "ticker": "VOS",
@@ -2753,11 +3117,15 @@
       "atr_14": 0.044073,
       "high_low": 0.037355,
       "market_return": 0.001473,
-      "foreign_net": -6130000.0
+      "foreign_net": -6130000.0,
+      "bu": 664300.0,
+      "sd": 892900.0,
+      "fs": 298371000.0,
+      "fb": 225720000.0
     },
-    "test_accuracy": 0.4939,
+    "test_accuracy": 0.5091,
     "test_samples": 330,
-    "predictability": "low"
+    "predictability": "medium"
   },
   "VPB": {
     "ticker": "VPB",
@@ -2783,7 +3151,11 @@
       "atr_14": 0.02672,
       "high_low": 0.023537,
       "market_return": 0.001473,
-      "foreign_net": -875000000.0
+      "foreign_net": -875000000.0,
+      "bu": 5293600.0,
+      "sd": 6499800.0,
+      "fs": 29014880000.0,
+      "fb": 17445800000.0
     },
     "test_accuracy": 0.5848,
     "test_samples": 330,

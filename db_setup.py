@@ -83,6 +83,10 @@ def main():
         high_low DOUBLE,
         market_return DOUBLE,
         foreign_net DOUBLE,
+        bu DOUBLE,
+        sd DOUBLE,
+        fs DOUBLE,
+        fb DOUBLE,
         target INT,
         PRIMARY KEY (ticker, date)
     ) ENGINE=InnoDB;
@@ -125,6 +129,10 @@ def main():
         high_low DOUBLE,
         market_return DOUBLE,
         foreign_net DOUBLE,
+        bu DOUBLE,
+        sd DOUBLE,
+        fs DOUBLE,
+        fb DOUBLE,
         PRIMARY KEY (ticker, date)
     ) ENGINE=InnoDB;
     """)
@@ -181,6 +189,10 @@ def main():
     print("    Merging 'foreign_net' into training data...")
     df = pd.merge(df, df_indicators, on=['ticker', 'date'], how='left')
     df['foreign_net'] = df['foreign_net'].fillna(0.0)
+    df['bu'] = 0.0
+    df['sd'] = 0.0
+    df['fs'] = 0.0
+    df['fb'] = 0.0
 
     # Compute target labels (T+5 return prediction target)
     print("    Calculating target labels...")
@@ -197,7 +209,8 @@ def main():
     train_cols = [
         'ticker', 'date', 'close_LogReturn', 'price_vs_sma50', 'volatility_20', 'volume_ratio_20',
         'return_3d', 'return_5d', 'return_10d', 'return_20d', 'sma_50_LogReturn', 'volume_LogReturn',
-        'PCA_Trend', 'PCA_Oscillators', 'PCA_MACD', 'PCA_ShortReturns', 'atr_14', 'high_low', 'market_return', 'foreign_net', 'target'
+        'PCA_Trend', 'PCA_Oscillators', 'PCA_MACD', 'PCA_ShortReturns', 'atr_14', 'high_low', 'market_return', 
+        'foreign_net', 'bu', 'sd', 'fs', 'fb', 'target'
     ]
     df_db = df[train_cols].dropna()
     print(f"    OK Cleaned training rows for DB ingest: {df_db.shape[0]}")

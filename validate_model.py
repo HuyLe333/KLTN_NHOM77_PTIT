@@ -1,7 +1,7 @@
 """
 =============================================================
-  SCRIPT XÁC THỰC ĐỘ CHÍNH XÁC MÔ HÌNH XGBOOST v2
-  Chạy cùng thư mục với: xgb_model.json, data2.xlsx
+  SCRIPT XAC THUC DO CHINH XAC MO HINH XGBOOST v2
+  Chay cung thu muc voi: xgb_model.json, data2.xlsx
 =============================================================
 """
 import pandas as pd
@@ -16,9 +16,9 @@ from sklearn.dummy import DummyClassifier
 
 SEP = "=" * 65
 
-# ─── LOAD DỮ LIỆU ─────────────────────────────────────────────
+# ─── LOAD DU LIEU ─────────────────────────────────────────────
 print(SEP)
-print("  LOAD DỮ LIỆU & MODEL")
+print("  LOAD DU LIEU & MODEL")
 print(SEP)
 
 loaded_from_db = False
@@ -32,7 +32,7 @@ try:
     print(f"    OK Loaded dataset from MySQL database table 'model_training_data'. Total rows: {len(df):,}")
     loaded_from_db = True
 except Exception as e:
-    print(f"    ⚠️ Failed to load from MySQL database: {e}")
+    print(f"    Failed to load from MySQL database: {e}")
     print("    Falling back to Excel files...")
 
 if not loaded_from_db:
@@ -83,7 +83,8 @@ feature_cols = ['price_vs_sma50','volatility_20','volume_ratio_20',
                 'return_3d','return_5d','return_10d','return_20d',
                 'sma_50_LogReturn','volume_LogReturn',
                 'PCA_Trend','PCA_Oscillators','PCA_MACD','PCA_ShortReturns',
-                'atr_14','high_low','market_return','foreign_net']
+                'atr_14','high_low','market_return','foreign_net',
+                'bu','sd','fs','fb']
 feature_cols = [c for c in feature_cols if c in df.columns]
 
 X = df[feature_cols]
@@ -111,14 +112,14 @@ y_train_pred = model.predict(X_train)
 test_acc  = accuracy_score(y_test, y_pred)
 train_acc = accuracy_score(y_train, y_train_pred)
 
-print(f"  Tổng mẫu : {len(df):,} | Train: {len(X_train):,} | Test: {len(X_test):,}")
+print(f"  Tong mau : {len(df):,} | Train: {len(X_train):,} | Test: {len(X_test):,}")
 if 'date' in df.columns:
-    print(f"  Khoảng ngày: {df['date'].min()} → {df['date'].max()}")
+    print(f"  Khoang ngay: {df['date'].min()} -> {df['date'].max()}")
 
 
 # ═══════════════════════════════════════════════════════════════
 print(f"\n{SEP}")
-print("  TẦNG 1 — SANITY CHECK CƠ BẢN")
+print("  TANG 1 - SANITY CHECK CO BAN")
 print(SEP)
 
 gap = train_acc - test_acc
@@ -127,65 +128,65 @@ print(f"       Train : {train_acc*100:.2f}%")
 print(f"       Test  : {test_acc*100:.2f}%")
 print(f"       Gap   : {gap*100:.2f}%")
 if gap > 0.10:
-    print("       ⚠️  CẢNH BÁO: Gap > 10% → khả năng OVERFIT cao")
+    print("       [WARN] Canh bao: Gap > 10% -> kha nang OVERFIT cao")
 elif gap > 0.05:
-    print("       ⚡ Gap 5-10% → overfit nhẹ, chấp nhận được")
+    print("       [INFO] Gap 5-10% -> overfit nhe, chap nhan duoc")
 else:
-    print("       ✅ Gap < 5% → không overfit đáng kể")
+    print("       [OK] Gap < 5% -> khong overfit dang ke")
 
 dummy = DummyClassifier(strategy='most_frequent', random_state=42)
 dummy.fit(X_train, y_train)
 dummy_acc = accuracy_score(y_test, dummy.predict(X_test))
-print(f"\n  [1B] So sánh với baseline:")
+print(f"\n  [1B] So sanh voi baseline:")
 print(f"       Baseline accuracy : {dummy_acc*100:.2f}%")
 print(f"       Model accuracy    : {test_acc*100:.2f}%")
-print(f"       Cải thiện         : +{(test_acc-dummy_acc)*100:.2f}%")
+print(f"       Cai thien         : +{(test_acc-dummy_acc)*100:.2f}%")
 if test_acc - dummy_acc < 0.03:
-    print("       ⚠️  Cải thiện < 3% so với baseline → rất đáng ngờ")
+    print("       [WARN] Cai thien < 3% so voi baseline -> rat dang ngo")
 else:
-    print("       ✅ Model có cải thiện thực chất so với baseline")
+    print("       [OK] Model co cai thien thuc chat so voi baseline")
 
-print(f"\n  [1C] Permutation test (shuffle label 5 lần):")
+print(f"\n  [1C] Permutation test (shuffle label 5 lan):")
 shuffle_accs = []
 for i in range(5):
     y_shuffle = y_test.sample(frac=1, random_state=i).values
     shuffle_accs.append(accuracy_score(y_shuffle, y_pred))
-print(f"       Accuracy khi label ngẫu nhiên: {np.mean(shuffle_accs)*100:.2f}% ± {np.std(shuffle_accs)*100:.2f}%")
+print(f"       Accuracy khi label ngau nhien: {np.mean(shuffle_accs)*100:.2f}% ± {np.std(shuffle_accs)*100:.2f}%")
 
 auc = roc_auc_score(y_test, y_pred_prob)
 print(f"\n  [1D] AUC-ROC: {auc:.4f}")
 if auc > 0.65:
-    print("       ✅ AUC > 0.65 → model có tín hiệu rõ ràng")
+    print("       [OK] AUC > 0.65 -> model co tin hieu ro rang")
 elif auc > 0.55:
-    print("       ⚡ AUC 0.55-0.65 → tín hiệu yếu nhưng có thực")
+    print("       [INFO] AUC 0.55-0.65 -> tin hieu yeu nhung co thuc")
 else:
-    print("       ⚠️  AUC < 0.55 → model gần như không phân biệt được")
+    print("       [WARN] AUC < 0.55 -> model gan nhu khong phan biet duoc")
 
 
 # ═══════════════════════════════════════════════════════════════
 print(f"\n{SEP}")
-print("  TẦNG 2 — KIỂM TRA DATA LEAKAGE")
+print("  TANG 2 - KIEM TRA DATA LEAKAGE")
 print(SEP)
 
-print("\n  [2A] Tương quan giữa từng feature và target:")
+print("\n  [2A] Tuong quan giua tung feature va target:")
 corr_series = X_test.corrwith(y_test.reset_index(drop=True)).abs().sort_values(ascending=False)
 for feat, corr in corr_series.items():
-    flag = " ⚠️  NGHI NGỜ LEAKAGE" if corr > 0.5 else (" ⚡ Cao" if corr > 0.3 else "")
+    flag = " [WARN] Nghi ngo leakage" if corr > 0.5 else (" [INFO] Cao" if corr > 0.3 else "")
     print(f"       {feat:25s}: {corr:.4f}{flag}")
 
-print(f"\n  [2B] Shuffle từng feature — drop accuracy:")
+print(f"\n  [2B] Shuffle tung feature - drop accuracy:")
 for feat in feature_cols:
     X_test_shuf = X_test.copy()
     X_test_shuf[feat] = X_test_shuf[feat].sample(frac=1, random_state=0).values
     acc_shuf = accuracy_score(y_test, model.predict(X_test_shuf))
     drop = (test_acc - acc_shuf) * 100
-    flag = " ⚠️  Leaky?" if drop < 0.5 else ""
+    flag = " [WARN] Leaky?" if drop < 0.5 else ""
     print(f"       {feat:25s}: acc={acc_shuf*100:.2f}%  drop={drop:+.2f}%{flag}")
 
 
 # ═══════════════════════════════════════════════════════════════
 print(f"\n{SEP}")
-print("  TẦNG 3 — TIME-SERIES VALIDATION (QUAN TRỌNG NHẤT)")
+print("  TANG 3 - TIME-SERIES VALIDATION (QUAN TRONG NHAT)")
 print(SEP)
 
 print(f"\n  [3A] TimeSeriesSplit 5-fold (gap de tranh overlap target):")
@@ -212,32 +213,32 @@ for fold, (tr_idx, te_idx) in enumerate(tscv.split(X_all)):
     print(f"       Fold {fold+1}: Train={len(tr_idx):,}  Test={len(te_idx):,}  "
           f"Acc={acc*100:.2f}%  AUC={auc_fold:.4f}")
 
-print(f"\n       Trung bình → Acc: {np.mean(ts_accs)*100:.2f}% ± {np.std(ts_accs)*100:.2f}%")
+print(f"\n       Trung binh -> Acc: {np.mean(ts_accs)*100:.2f}% ± {np.std(ts_accs)*100:.2f}%")
 print(f"                    AUC: {np.mean(ts_aucs):.4f} ± {np.std(ts_aucs):.4f}")
 
 gap_ts = test_acc - np.mean(ts_accs)
 if abs(gap_ts) < 0.05:
-    print(f"\n  ✅ Time-series acc tương đương chronological split")
+    print(f"\n  [OK] Time-series acc tuong duong chronological split")
 elif gap_ts > 0.10:
-    print(f"\n  ⚠️  Chronological split overestimate {gap_ts*100:.1f}%")
+    print(f"\n  [WARN] Chronological split overestimate {gap_ts*100:.1f}%")
 else:
-    print(f"\n  ⚡ Chronological split cao hơn time-series {gap_ts*100:.1f}%")
+    print(f"\n  [INFO] Chronological split cao hon time-series {gap_ts*100:.1f}%")
 
 
 # ═══════════════════════════════════════════════════════════════
 print(f"\n{SEP}")
-print("  TẦNG 4 — ROBUSTNESS & STABILITY")
+print("  TANG 4 - ROBUSTNESS & STABILITY")
 print(SEP)
 
 report = classification_report(y_test, y_pred, output_dict=True)
-print(f"\n  [4A] Accuracy từng lớp:")
-print(f"       Dự đoán GIẢM (0): precision={report['0']['precision']:.3f}  "
+print(f"\n  [4A] Accuracy tung lop:")
+print(f"       Du doan GIAM (0): precision={report['0']['precision']:.3f}  "
       f"recall={report['0']['recall']:.3f}  f1={report['0']['f1-score']:.3f}")
-print(f"       Dự đoán TĂNG (1): precision={report['1']['precision']:.3f}  "
+print(f"       Du doan TANG (1): precision={report['1']['precision']:.3f}  "
       f"recall={report['1']['recall']:.3f}  f1={report['1']['f1-score']:.3f}")
 
 # FIX: dùng .loc với index thực thay vì .iloc
-print(f"\n  [4B] Accuracy theo từng mã cổ phiếu:")
+print(f"\n  [4B] Accuracy theo tung ma co phieu:")
 df_test = X_test.copy()
 df_test['_ticker'] = ticker_series.loc[X_test.index].values  # FIX đây
 df_test['y_true']  = y_test.values
@@ -250,24 +251,24 @@ for t, grp in df_test.groupby('_ticker'):
         ticker_accs.append((t, ta, len(grp)))
 
 ticker_accs.sort(key=lambda x: x[1], reverse=True)
-print(f"       Top 5 mã tốt nhất:")
+print(f"       Top 5 ma tot nhat:")
 for t, ta, n in ticker_accs[:5]:
     print(f"         {str(t):10s}: {ta*100:.1f}%  (n={n})")
-print(f"       Bottom 5 mã tệ nhất:")
+print(f"       Bottom 5 ma te nhat:")
 for t, ta, n in ticker_accs[-5:]:
     print(f"         {str(t):10s}: {ta*100:.1f}%  (n={n})")
 
 avg_ticker_acc = np.mean([x[1] for x in ticker_accs])
 std_ticker_acc = np.std([x[1] for x in ticker_accs])
-print(f"\n       Trung bình qua các mã : {avg_ticker_acc*100:.2f}%")
-print(f"       Độ lệch chuẩn          : ±{std_ticker_acc*100:.2f}%")
+print(f"\n       Trung binh qua cac ma : {avg_ticker_acc*100:.2f}%")
+print(f"       Do lech chuan          : ±{std_ticker_acc*100:.2f}%")
 if std_ticker_acc > 0.10:
-    print(f"       ⚠️  Std > 10% → hiệu quả không đồng đều giữa các mã")
+    print(f"       [WARN] Std > 10% -> hieu qua khong dong deu giua cac ma")
 else:
-    print(f"       ✅ Model ổn định qua các mã")
+    print(f"       [OK] Model on dinh qua cac ma")
 
 # Accuracy theo năm
-print(f"\n  [4C] Accuracy theo từng năm:")
+print(f"\n  [4C] Accuracy theo tung nam:")
 if 'date' in df.columns:
     df_test2 = X_test.copy()
     df_test2['y_true'] = y_test.values
@@ -277,12 +278,12 @@ if 'date' in df.columns:
         ya = accuracy_score(grp['y_true'], grp['y_pred'])
         print(f"         {yr}: {ya*100:.2f}%  (n={len(grp):,})")
 else:
-    print("       (Không tìm thấy cột date để phân tích theo năm)")
+    print("       (Khong tim thay cot date de phan tich theo nam)")
 
 
 # ═══════════════════════════════════════════════════════════════
 print(f"\n{SEP}")
-print("  TÓM TẮT CUỐI CÙNG")
+print("  TOM TAT CUOI CUNG")
 print(SEP)
 print(f"""
   Chronological split accuracy: {test_acc*100:.2f}%
@@ -290,5 +291,5 @@ print(f"""
   Baseline (majority class)   : {dummy_acc*100:.2f}%
   AUC-ROC                     : {auc:.4f}
   AUC-ROC (time-series avg)   : {np.mean(ts_aucs):.4f}
-  Accuracy trung bình/ticker  : {avg_ticker_acc*100:.2f}% ± {std_ticker_acc*100:.2f}%
+  Accuracy trung binh/ticker  : {avg_ticker_acc*100:.2f}% ± {std_ticker_acc*100:.2f}%
 """)

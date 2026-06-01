@@ -107,7 +107,8 @@ feature_cols = [
     'return_3d', 'return_5d', 'return_10d', 'return_20d',
     'sma_50_LogReturn', 'volume_LogReturn',
     'PCA_Trend', 'PCA_Oscillators', 'PCA_MACD', 'PCA_ShortReturns',
-    'atr_14', 'high_low', 'market_return', 'foreign_net'
+    'atr_14', 'high_low', 'market_return', 'foreign_net',
+    'bu', 'sd', 'fs', 'fb'
 ]
 feature_cols = [c for c in feature_cols if c in df.columns]
 print(f"    OK So features (sau khi loai leaky): {len(feature_cols)}")
