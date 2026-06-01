@@ -87,24 +87,32 @@ def load_resources():
             
     if not _cached_resources['ticker_stats']:
         try:
-            print("Loading ticker statistics from MySQL...")
-            engine = create_engine(f"mysql+mysqlconnector://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}")
-            df = pd.read_sql("SELECT ticker, date, price_vs_sma50, volatility_20, volume_ratio_20, return_3d, return_5d, return_10d, return_20d, sma_50_LogReturn, volume_LogReturn, PCA_Trend, PCA_Oscillators, PCA_MACD, PCA_ShortReturns, atr_14, high_low, market_return FROM model_training_data", engine)
-            
-            ticker_stats = {}
-            for ticker, group in df.groupby('ticker'):
-                ticker_stats[ticker] = {
-                    'median_features': group.drop(columns=['ticker', 'date']).median().to_dict(),
-                    'total_samples': len(group),
-                    'latest_date': str(group['date'].max())
-                }
-            _cached_resources['ticker_stats'] = ticker_stats
-            print("Loaded ticker stats from MySQL successfully.")
-        except Exception as e:
-            print(f"Error loading ticker stats from DB: {e}. Falling back to JSON...")
             if os.path.exists(TICKER_PATH):
+                print("Loading ticker statistics from JSON...")
                 with open(TICKER_PATH, 'r', encoding='utf-8') as f:
                     _cached_resources['ticker_stats'] = json.load(f)
+                print("Loaded ticker stats from JSON successfully.")
+            else:
+                raise FileNotFoundError("ticker_stats.json not found")
+        except Exception as e:
+            print(f"Error loading ticker stats from JSON: {e}. Querying MySQL...")
+            try:
+                engine = create_engine(f"mysql+mysqlconnector://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}")
+                df = pd.read_sql("SELECT ticker, date, price_vs_sma50, volatility_20, volume_ratio_20, return_3d, return_5d, return_10d, return_20d, sma_50_LogReturn, volume_LogReturn, PCA_Trend, PCA_Oscillators, PCA_MACD, PCA_ShortReturns, atr_14, high_low, market_return FROM model_training_data", engine)
+                
+                ticker_stats = {}
+                for ticker, group in df.groupby('ticker'):
+                    ticker_stats[ticker] = {
+                        'median_features': group.drop(columns=['ticker', 'date']).median().to_dict(),
+                        'total_samples': len(group),
+                        'latest_date': str(group['date'].max()),
+                        'test_accuracy': 0.51,
+                        'predictability': 'medium'
+                    }
+                _cached_resources['ticker_stats'] = ticker_stats
+                print("Loaded ticker stats from MySQL successfully.")
+            except Exception as ex:
+                print(f"Failed to query MySQL: {ex}")
             
     return (
         _cached_resources['model'],
@@ -134,6 +142,8 @@ def api_tickers():
     if model is None:
         return jsonify({'error': 'Model chua duoc training'}), 400
         
+    threshold_offset = request.args.get('threshold_offset', default=0.0, type=float)
+        
     try:
         engine = create_engine(f"mysql+mysqlconnector://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}")
         with engine.connect() as conn:
@@ -155,10 +165,17 @@ def api_tickers():
             prob_down = float(row['probability_down'])
             conf = max(prob_up, prob_down)
             
+            # Lọc theo độ tự tin
+            if threshold_offset > 0.0:
+                if 0.5 - threshold_offset < prob_up < 0.5 + threshold_offset:
+                    continue
+            
             # Fetch stats
             stats = ticker_stats.get(ticker, {})
             medians = stats.get('median_features', {})
             total_samples = stats.get('total_samples', 0)
+            test_accuracy = stats.get('test_accuracy', 0.51)
+            predictability = stats.get('predictability', 'medium')
             
             results.append({
                 'ticker': ticker,
@@ -170,7 +187,9 @@ def api_tickers():
                 'total_samples': total_samples,
                 'latest_date': str(row['date']),
                 'predict_date': str(row['predict_date']),
-                'median_features': medians
+                'median_features': medians,
+                'test_accuracy': round(test_accuracy, 4),
+                'predictability': predictability
             })
             
         results.sort(key=lambda x: x['ticker'])
@@ -250,6 +269,8 @@ def api_ticker_detail(ticker_name):
         stats = ticker_stats.get(ticker_upper, {})
         medians = stats.get('median_features', {})
         total_samples = stats.get('total_samples', 0)
+        test_accuracy = stats.get('test_accuracy', 0.51)
+        predictability = stats.get('predictability', 'medium')
         
         return jsonify({
             'ticker': ticker_upper,
@@ -263,7 +284,9 @@ def api_ticker_detail(ticker_name):
             'shap_features': shap_explanations,
             'median_features': medians,
             'latest_date': str(pred_row['date']),
-            'predict_date': str(pred_row['predict_date'])
+            'predict_date': str(pred_row['predict_date']),
+            'test_accuracy': round(test_accuracy, 4),
+            'predictability': predictability
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500

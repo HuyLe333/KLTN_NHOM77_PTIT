@@ -1,13 +1,232 @@
 {
-  "accuracy": 0.6854,
-  "precision": 0.686,
-  "recall": 0.6854,
-  "f1_score": 0.6855,
-  "auc_roc": 0.7497,
-  "train_samples": 98181,
-  "test_samples": 24546,
-  "total_samples": 122727,
-  "n_features": 16,
+  "accuracy": 0.5193,
+  "precision": 0.5199,
+  "threshold_metrics": {
+    "0.0": {
+      "accuracy": 0.5193,
+      "precision": 0.5199,
+      "recall": 0.5193,
+      "f1_score": 0.5185,
+      "auc_roc": 0.5332,
+      "samples": 30671,
+      "pct_samples": 100.0,
+      "confusion_matrix": [
+        [
+          8523,
+          6649
+        ],
+        [
+          8095,
+          7404
+        ]
+      ],
+      "classification_report": {
+        "class_0": {
+          "precision": 0.5129,
+          "recall": 0.5618,
+          "f1_score": 0.5362
+        },
+        "class_1": {
+          "precision": 0.5269,
+          "recall": 0.4777,
+          "f1_score": 0.5011
+        }
+      }
+    },
+    "0.05": {
+      "accuracy": 0.5251,
+      "precision": 0.5257,
+      "recall": 0.5251,
+      "f1_score": 0.5238,
+      "auc_roc": 0.5403,
+      "samples": 23339,
+      "pct_samples": 76.09,
+      "confusion_matrix": [
+        [
+          6708,
+          4889
+        ],
+        [
+          6195,
+          5547
+        ]
+      ],
+      "classification_report": {
+        "class_0": {
+          "precision": 0.5199,
+          "recall": 0.5784,
+          "f1_score": 0.5476
+        },
+        "class_1": {
+          "precision": 0.5315,
+          "recall": 0.4724,
+          "f1_score": 0.5002
+        }
+      }
+    },
+    "0.1": {
+      "accuracy": 0.5359,
+      "precision": 0.5366,
+      "recall": 0.5359,
+      "f1_score": 0.5346,
+      "auc_roc": 0.5507,
+      "samples": 16646,
+      "pct_samples": 54.27,
+      "confusion_matrix": [
+        [
+          4896,
+          3393
+        ],
+        [
+          4332,
+          4025
+        ]
+      ],
+      "classification_report": {
+        "class_0": {
+          "precision": 0.5306,
+          "recall": 0.5907,
+          "f1_score": 0.559
+        },
+        "class_1": {
+          "precision": 0.5426,
+          "recall": 0.4816,
+          "f1_score": 0.5103
+        }
+      }
+    },
+    "0.15": {
+      "accuracy": 0.5481,
+      "precision": 0.5496,
+      "recall": 0.5481,
+      "f1_score": 0.5468,
+      "auc_roc": 0.5644,
+      "samples": 11123,
+      "pct_samples": 36.27,
+      "confusion_matrix": [
+        [
+          3302,
+          2177
+        ],
+        [
+          2850,
+          2794
+        ]
+      ],
+      "classification_report": {
+        "class_0": {
+          "precision": 0.5367,
+          "recall": 0.6027,
+          "f1_score": 0.5678
+        },
+        "class_1": {
+          "precision": 0.5621,
+          "recall": 0.495,
+          "f1_score": 0.5264
+        }
+      }
+    },
+    "0.2": {
+      "accuracy": 0.5626,
+      "precision": 0.565,
+      "recall": 0.5626,
+      "f1_score": 0.5619,
+      "auc_roc": 0.5789,
+      "samples": 7069,
+      "pct_samples": 23.05,
+      "confusion_matrix": [
+        [
+          2089,
+          1340
+        ],
+        [
+          1752,
+          1888
+        ]
+      ],
+      "classification_report": {
+        "class_0": {
+          "precision": 0.5439,
+          "recall": 0.6092,
+          "f1_score": 0.5747
+        },
+        "class_1": {
+          "precision": 0.5849,
+          "recall": 0.5187,
+          "f1_score": 0.5498
+        }
+      }
+    },
+    "0.25": {
+      "accuracy": 0.5781,
+      "precision": 0.5813,
+      "recall": 0.5781,
+      "f1_score": 0.5778,
+      "auc_roc": 0.5925,
+      "samples": 4288,
+      "pct_samples": 13.98,
+      "confusion_matrix": [
+        [
+          1268,
+          782
+        ],
+        [
+          1027,
+          1211
+        ]
+      ],
+      "classification_report": {
+        "class_0": {
+          "precision": 0.5525,
+          "recall": 0.6185,
+          "f1_score": 0.5837
+        },
+        "class_1": {
+          "precision": 0.6076,
+          "recall": 0.5411,
+          "f1_score": 0.5724
+        }
+      }
+    },
+    "0.3": {
+      "accuracy": 0.5982,
+      "precision": 0.602,
+      "recall": 0.5982,
+      "f1_score": 0.5984,
+      "auc_roc": 0.6004,
+      "samples": 2618,
+      "pct_samples": 8.54,
+      "confusion_matrix": [
+        [
+          768,
+          457
+        ],
+        [
+          595,
+          798
+        ]
+      ],
+      "classification_report": {
+        "class_0": {
+          "precision": 0.5635,
+          "recall": 0.6269,
+          "f1_score": 0.5935
+        },
+        "class_1": {
+          "precision": 0.6359,
+          "recall": 0.5729,
+          "f1_score": 0.6027
+        }
+      }
+    }
+  },
+  "recall": 0.5193,
+  "f1_score": 0.5185,
+  "auc_roc": 0.5332,
+  "train_samples": 91315,
+  "test_samples": 30671,
+  "total_samples": 121986,
+  "n_features": 17,
   "feature_cols": [
     "price_vs_sma50",
     "volatility_20",
@@ -24,226 +243,231 @@
     "PCA_ShortReturns",
     "atr_14",
     "high_low",
-    "market_return"
+    "market_return",
+    "foreign_net"
   ],
   "class_distribution": {
-    "tang": 63250,
-    "giam": 59477
+    "tang": 62614,
+    "giam": 59372
   },
   "confusion_matrix": [
     [
-      8257,
-      3639
+      8523,
+      6649
     ],
     [
-      4082,
-      8568
+      8095,
+      7404
     ]
   ],
   "classification_report": {
     "class_0": {
-      "precision": 0.6692,
-      "recall": 0.6941,
-      "f1_score": 0.6814,
-      "support": 11896
+      "precision": 0.5129,
+      "recall": 0.5618,
+      "f1_score": 0.5362,
+      "support": 15172
     },
     "class_1": {
-      "precision": 0.7019,
-      "recall": 0.6773,
-      "f1_score": 0.6894,
-      "support": 12650
+      "precision": 0.5269,
+      "recall": 0.4777,
+      "f1_score": 0.5011,
+      "support": 15499
     }
   },
   "feature_importance": [
     {
-      "feature": "high_low",
-      "importance": 0.125565
-    },
-    {
       "feature": "market_return",
-      "importance": 0.115375
-    },
-    {
-      "feature": "return_10d",
-      "importance": 0.063761
-    },
-    {
-      "feature": "return_5d",
-      "importance": 0.06174
+      "importance": 0.116092
     },
     {
       "feature": "sma_50_LogReturn",
-      "importance": 0.061531
-    },
-    {
-      "feature": "PCA_ShortReturns",
-      "importance": 0.060335
-    },
-    {
-      "feature": "return_20d",
-      "importance": 0.059678
-    },
-    {
-      "feature": "PCA_MACD",
-      "importance": 0.058683
-    },
-    {
-      "feature": "price_vs_sma50",
-      "importance": 0.056143
+      "importance": 0.066943
     },
     {
       "feature": "volatility_20",
-      "importance": 0.054051
+      "importance": 0.066041
+    },
+    {
+      "feature": "return_10d",
+      "importance": 0.062782
+    },
+    {
+      "feature": "return_20d",
+      "importance": 0.062134
     },
     {
       "feature": "PCA_Trend",
-      "importance": 0.053818
+      "importance": 0.061039
+    },
+    {
+      "feature": "price_vs_sma50",
+      "importance": 0.059186
+    },
+    {
+      "feature": "PCA_ShortReturns",
+      "importance": 0.058408
+    },
+    {
+      "feature": "return_5d",
+      "importance": 0.057715
     },
     {
       "feature": "return_3d",
-      "importance": 0.051517
+      "importance": 0.055787
+    },
+    {
+      "feature": "PCA_MACD",
+      "importance": 0.052113
     },
     {
       "feature": "PCA_Oscillators",
-      "importance": 0.050566
+      "importance": 0.051469
     },
     {
       "feature": "atr_14",
-      "importance": 0.046611
+      "importance": 0.049753
     },
     {
       "feature": "volume_ratio_20",
-      "importance": 0.04367
+      "importance": 0.049078
+    },
+    {
+      "feature": "high_low",
+      "importance": 0.047854
+    },
+    {
+      "feature": "foreign_net",
+      "importance": 0.042937
     },
     {
       "feature": "volume_LogReturn",
-      "importance": 0.036956
+      "importance": 0.040668
     }
   ],
   "learning_curves": {
     "train_logloss": [
-      0.691023,
-      0.683768,
-      0.677975,
-      0.67186,
-      0.667334,
-      0.663351,
-      0.659793,
-      0.656394,
-      0.653771,
-      0.651365,
-      0.648809,
-      0.645756,
-      0.643932,
-      0.641743,
-      0.63998,
-      0.637314,
-      0.634851,
-      0.633415,
-      0.631599,
-      0.630035,
-      0.628062,
-      0.626642,
-      0.625163,
-      0.623865,
-      0.622144,
-      0.620641,
-      0.618287,
-      0.616695,
-      0.615353,
-      0.613438,
-      0.611504,
-      0.609879,
-      0.608692,
-      0.607075,
-      0.605846,
-      0.604946,
-      0.60344,
-      0.602436,
-      0.601112,
-      0.599861,
-      0.598834,
-      0.597489,
-      0.596735,
-      0.595412,
-      0.594079,
-      0.593181,
-      0.591726,
-      0.590527,
-      0.589349,
-      0.58844,
-      0.587172,
-      0.585474,
-      0.583941,
-      0.582765,
-      0.581751,
-      0.580754,
-      0.579415,
-      0.578274,
-      0.577237,
-      0.576315
+      0.692594,
+      0.689775,
+      0.687449,
+      0.685627,
+      0.684016,
+      0.68226,
+      0.680498,
+      0.678849,
+      0.677207,
+      0.675484,
+      0.673921,
+      0.672411,
+      0.671342,
+      0.670073,
+      0.668877,
+      0.667005,
+      0.665491,
+      0.664384,
+      0.663365,
+      0.662403,
+      0.661191,
+      0.660089,
+      0.659266,
+      0.658037,
+      0.656716,
+      0.6557,
+      0.654593,
+      0.653635,
+      0.652634,
+      0.65188,
+      0.650914,
+      0.649776,
+      0.649035,
+      0.648246,
+      0.647375,
+      0.646472,
+      0.645734,
+      0.645049,
+      0.643946,
+      0.643104,
+      0.64244,
+      0.641717,
+      0.64057,
+      0.640023,
+      0.639119,
+      0.638435,
+      0.637138,
+      0.636028,
+      0.63506,
+      0.633891,
+      0.633281,
+      0.632479,
+      0.631972,
+      0.631197,
+      0.63035,
+      0.629577,
+      0.629019,
+      0.62808,
+      0.627401,
+      0.626721
     ],
     "val_logloss": [
-      0.691267,
-      0.684837,
-      0.679851,
-      0.674359,
-      0.67077,
-      0.667622,
-      0.664689,
-      0.662062,
-      0.660147,
-      0.658389,
-      0.656615,
-      0.654173,
-      0.653152,
-      0.651496,
-      0.650318,
-      0.64819,
-      0.646201,
-      0.645218,
-      0.643991,
-      0.642831,
-      0.641593,
-      0.640736,
-      0.639832,
-      0.639151,
-      0.637935,
-      0.636887,
-      0.635147,
-      0.63395,
-      0.633191,
-      0.631767,
-      0.630294,
-      0.629305,
-      0.628668,
-      0.627547,
-      0.626834,
-      0.626548,
-      0.62542,
-      0.624756,
-      0.624007,
-      0.623263,
-      0.622776,
-      0.62197,
-      0.621735,
-      0.620892,
-      0.620076,
-      0.619502,
-      0.618607,
-      0.617794,
-      0.617141,
-      0.616754,
-      0.615974,
-      0.61479,
-      0.613833,
-      0.613166,
-      0.612727,
-      0.612094,
-      0.611315,
-      0.610689,
-      0.610166,
-      0.60973
+      0.693011,
+      0.692691,
+      0.69276,
+      0.692492,
+      0.692493,
+      0.692497,
+      0.692631,
+      0.69276,
+      0.692788,
+      0.692957,
+      0.692958,
+      0.692893,
+      0.693099,
+      0.693023,
+      0.693153,
+      0.692987,
+      0.69305,
+      0.692906,
+      0.693167,
+      0.693507,
+      0.693465,
+      0.693342,
+      0.693537,
+      0.693559,
+      0.693475,
+      0.693504,
+      0.693594,
+      0.693783,
+      0.693777,
+      0.69399,
+      0.694055,
+      0.694274,
+      0.694458,
+      0.694558,
+      0.694743,
+      0.694887,
+      0.695037,
+      0.695119,
+      0.695281,
+      0.695294,
+      0.695224,
+      0.695544,
+      0.695537,
+      0.695615,
+      0.695908,
+      0.695987,
+      0.696071,
+      0.696324,
+      0.696302,
+      0.696449,
+      0.696662,
+      0.696719,
+      0.696777,
+      0.697001,
+      0.697087,
+      0.69721,
+      0.697395,
+      0.697429,
+      0.697676,
+      0.697619
     ],
     "epochs": [
       0,
@@ -310,15 +534,15 @@
   },
   "model_params": {
     "n_estimators": 300,
-    "max_depth": 6,
+    "max_depth": 5,
     "learning_rate": 0.05,
     "subsample": 0.8,
     "colsample_bytree": 0.8,
     "min_child_weight": 5,
-    "gamma": 0.1,
-    "reg_alpha": 0.1,
-    "reg_lambda": 1.0,
-    "scale_pos_weight": 0.9403
+    "gamma": 0.5,
+    "reg_alpha": 0.5,
+    "reg_lambda": 2.0,
+    "scale_pos_weight": 0.9381
   },
   "removed_features": [
     "rsi_14_LogReturn",

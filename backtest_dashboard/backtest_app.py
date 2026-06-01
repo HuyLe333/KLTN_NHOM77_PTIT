@@ -79,36 +79,79 @@ def index():
     return render_template('backtest.html')
 
 
+def load_test_data(engine, feature_cols):
+    """Loads model_training_data, computes T+5 target, and filters for Test set (from 2025-01-01)"""
+    df = pd.read_sql(text("SELECT * FROM model_training_data ORDER BY date"), engine)
+    if df.empty:
+        return pd.DataFrame()
+    
+    # Convert date to datetime and sort
+    df['date'] = pd.to_datetime(df['date'])
+    df = df.sort_values('date').reset_index(drop=True)
+    
+    # Compute T+5 target
+    df['close_LogReturn_5d'] = (
+        df.groupby('ticker')['close_LogReturn'].shift(-1) +
+        df.groupby('ticker')['close_LogReturn'].shift(-2) +
+        df.groupby('ticker')['close_LogReturn'].shift(-3) +
+        df.groupby('ticker')['close_LogReturn'].shift(-4) +
+        df.groupby('ticker')['close_LogReturn'].shift(-5)
+    )
+    df = df.dropna(subset=['close_LogReturn_5d'])
+    df['target'] = (df['close_LogReturn_5d'] > 0).astype(int)
+    
+    # Filter for Test set (2025 onwards)
+    test_df = df[df['date'] >= '2025-01-01'].copy()
+    return test_df
+
+
 # ═══════════════════════════════════════════════════════════
 #  BACKTEST APIs
 # ═══════════════════════════════════════════════════════════
 
 @app.route('/api/backtest/summary')
 def backtest_summary():
-    """Run backtest on test set (last 20% by time) and return overall metrics"""
+    """Run backtest on test set (2025-2026) and return overall metrics with confidence filtering"""
     model, feature_cols = load_model()
     if model is None:
         return jsonify({'error': 'Model not found'}), 400
 
     engine = get_engine()
-    df = pd.read_sql(text("SELECT * FROM model_training_data ORDER BY date"), engine)
+    test_df = load_test_data(engine, feature_cols)
+    if test_df.empty:
+        return jsonify({'error': 'No test data'}), 400
 
-    if df.empty:
-        return jsonify({'error': 'No training data'}), 400
-
-    # Recreate target from close_LogReturn (same logic as train_model.py)
-    # target column already exists in the table
-    df = df.dropna(subset=['target'])
-
-    # Time-based split: last 20%
-    split_idx = int(len(df) * 0.8)
-    test_df = df.iloc[split_idx:].copy()
+    threshold_offset = request.args.get('threshold_offset', 0.0, type=float)
 
     X_test = test_df[feature_cols].values
     y_true = test_df['target'].values.astype(int)
 
     y_pred = model.predict(X_test).astype(int)
     y_proba = model.predict_proba(X_test)[:, 1]
+
+    # Apply confidence filtering
+    if threshold_offset > 0.0:
+        lower_bound = 0.5 - threshold_offset
+        upper_bound = 0.5 + threshold_offset
+        mask = (y_proba <= lower_bound) | (y_proba >= upper_bound)
+        X_test = X_test[mask]
+        y_true = y_true[mask]
+        y_pred = y_pred[mask]
+        y_proba = y_proba[mask]
+        test_df = test_df[mask]
+
+    if len(y_true) == 0:
+        return jsonify({
+            'total_samples': 0,
+            'accuracy': 0.0,
+            'precision': 0.0,
+            'recall': 0.0,
+            'f1_score': 0.0,
+            'auc_roc': 0.0,
+            'confusion_matrix': [[0, 0], [0, 0]],
+            'test_date_range': {'start': '', 'end': ''},
+            'class_distribution': {'up': 0, 'down': 0}
+        })
 
     acc = accuracy_score(y_true, y_pred)
     prec = precision_score(y_true, y_pred, zero_division=0)
@@ -130,8 +173,8 @@ def backtest_summary():
         'auc_roc': round(auc, 4),
         'confusion_matrix': cm,
         'test_date_range': {
-            'start': str(test_df['date'].min()),
-            'end': str(test_df['date'].max())
+            'start': str(test_df['date'].min().strftime('%Y-%m-%d')) if not test_df.empty else '',
+            'end': str(test_df['date'].max().strftime('%Y-%m-%d')) if not test_df.empty else ''
         },
         'class_distribution': {
             'up': int((y_true == 1).sum()),
@@ -142,41 +185,48 @@ def backtest_summary():
 
 @app.route('/api/backtest/by-ticker')
 def backtest_by_ticker():
-    """Accuracy breakdown by ticker on test set"""
+    """Accuracy breakdown by ticker on test set with confidence filtering"""
     model, feature_cols = load_model()
     if model is None:
         return jsonify({'error': 'Model not found'}), 400
 
     engine = get_engine()
-    df = pd.read_sql(text("SELECT * FROM model_training_data ORDER BY date"), engine)
-    df = df.dropna(subset=['target'])
+    test_df = load_test_data(engine, feature_cols)
+    if test_df.empty:
+        return jsonify([])
 
-    split_idx = int(len(df) * 0.8)
-    test_df = df.iloc[split_idx:].copy()
+    threshold_offset = request.args.get('threshold_offset', 0.0, type=float)
 
     test_df['y_pred'] = model.predict(test_df[feature_cols].values).astype(int)
     test_df['y_proba'] = model.predict_proba(test_df[feature_cols].values)[:, 1]
 
-    results = []
-    for ticker, grp in test_df.groupby('ticker'):
-        y_true = grp['target'].values.astype(int)
-        y_pred = grp['y_pred'].values
-        if len(y_true) < 5:
-            continue
-        acc = accuracy_score(y_true, y_pred)
-        correct = int((y_true == y_pred).sum())
-        total = len(y_true)
-        up_preds = int((y_pred == 1).sum())
-        down_preds = int((y_pred == 0).sum())
+    # Apply confidence filtering
+    if threshold_offset > 0.0:
+        lower_bound = 0.5 - threshold_offset
+        upper_bound = 0.5 + threshold_offset
+        test_df = test_df[(test_df['y_proba'] <= lower_bound) | (test_df['y_proba'] >= upper_bound)]
 
-        results.append({
-            'ticker': ticker,
-            'accuracy': round(acc, 4),
-            'correct': correct,
-            'total': total,
-            'up_predictions': up_preds,
-            'down_predictions': down_preds
-        })
+    results = []
+    if not test_df.empty:
+        for ticker, grp in test_df.groupby('ticker'):
+            y_true = grp['target'].values.astype(int)
+            y_pred = grp['y_pred'].values
+            if len(y_true) < 1:
+                continue
+            acc = accuracy_score(y_true, y_pred)
+            correct = int((y_true == y_pred).sum())
+            total = len(y_true)
+            up_preds = int((y_pred == 1).sum())
+            down_preds = int((y_pred == 0).sum())
+
+            results.append({
+                'ticker': ticker,
+                'accuracy': round(acc, 4),
+                'correct': correct,
+                'total': total,
+                'up_predictions': up_preds,
+                'down_predictions': down_preds
+            })
 
     results.sort(key=lambda x: x['accuracy'], reverse=True)
     return jsonify(results)
@@ -184,39 +234,48 @@ def backtest_by_ticker():
 
 @app.route('/api/backtest/timeline')
 def backtest_timeline():
-    """Monthly rolling accuracy to detect model drift"""
+    """Monthly rolling accuracy with confidence filtering"""
     model, feature_cols = load_model()
     if model is None:
         return jsonify({'error': 'Model not found'}), 400
 
     engine = get_engine()
-    df = pd.read_sql(text("SELECT * FROM model_training_data ORDER BY date"), engine)
-    df = df.dropna(subset=['target'])
-
-    split_idx = int(len(df) * 0.8)
-    test_df = df.iloc[split_idx:].copy()
+    test_df = load_test_data(engine, feature_cols)
+    if test_df.empty:
+        return jsonify([])
+    
+    threshold_offset = request.args.get('threshold_offset', 0.0, type=float)
+    
     test_df['y_pred'] = model.predict(test_df[feature_cols].values).astype(int)
+    test_df['y_proba'] = model.predict_proba(test_df[feature_cols].values)[:, 1]
+
+    # Apply confidence filtering
+    if threshold_offset > 0.0:
+        lower_bound = 0.5 - threshold_offset
+        upper_bound = 0.5 + threshold_offset
+        test_df = test_df[(test_df['y_proba'] <= lower_bound) | (test_df['y_proba'] >= upper_bound)]
 
     test_df['month'] = pd.to_datetime(test_df['date']).dt.to_period('M').astype(str)
 
     timeline = []
-    for month, grp in test_df.groupby('month'):
-        y_true = grp['target'].values.astype(int)
-        y_pred = grp['y_pred'].values
-        acc = accuracy_score(y_true, y_pred)
-        timeline.append({
-            'month': month,
-            'accuracy': round(acc, 4),
-            'total': len(grp),
-            'correct': int((y_true == y_pred).sum())
-        })
+    if not test_df.empty:
+        for month, grp in test_df.groupby('month'):
+            y_true = grp['target'].values.astype(int)
+            y_pred = grp['y_pred'].values
+            acc = accuracy_score(y_true, y_pred)
+            timeline.append({
+                'month': month,
+                'accuracy': round(acc, 4),
+                'total': len(grp),
+                'correct': int((y_true == y_pred).sum())
+            })
 
     return jsonify(timeline)
 
 
 @app.route('/api/backtest/predictions')
 def backtest_predictions():
-    """Detailed prediction list with pagination"""
+    """Detailed prediction list with pagination and confidence filtering"""
     model, feature_cols = load_model()
     if model is None:
         return jsonify({'error': 'Model not found'}), 400
@@ -224,15 +283,27 @@ def backtest_predictions():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
     ticker_filter = request.args.get('ticker', '').upper()
+    threshold_offset = request.args.get('threshold_offset', 0.0, type=float)
 
     engine = get_engine()
-    df = pd.read_sql(text("SELECT * FROM model_training_data ORDER BY date"), engine)
-    df = df.dropna(subset=['target'])
-
-    split_idx = int(len(df) * 0.8)
-    test_df = df.iloc[split_idx:].copy()
+    test_df = load_test_data(engine, feature_cols)
+    if test_df.empty:
+        return jsonify({
+            'predictions': [],
+            'total': 0,
+            'page': page,
+            'per_page': per_page,
+            'total_pages': 0
+        })
     test_df['y_pred'] = model.predict(test_df[feature_cols].values).astype(int)
     test_df['y_proba'] = model.predict_proba(test_df[feature_cols].values)[:, 1]
+    
+    # Apply confidence filtering
+    if threshold_offset > 0.0:
+        lower_bound = 0.5 - threshold_offset
+        upper_bound = 0.5 + threshold_offset
+        test_df = test_df[(test_df['y_proba'] <= lower_bound) | (test_df['y_proba'] >= upper_bound)]
+
     test_df['correct'] = (test_df['target'] == test_df['y_pred']).astype(int)
 
     if ticker_filter:
@@ -250,7 +321,7 @@ def backtest_predictions():
     for _, row in page_df.iterrows():
         predictions.append({
             'ticker': row['ticker'],
-            'date': str(row['date']),
+            'date': row['date'].strftime('%Y-%m-%d'),
             'predicted': int(row['y_pred']),
             'actual': int(row['target']),
             'correct': int(row['correct']),
@@ -262,7 +333,7 @@ def backtest_predictions():
         'total': total,
         'page': page,
         'per_page': per_page,
-        'total_pages': (total + per_page - 1) // per_page
+        'total_pages': (total + per_page - 1) // per_page if total > 0 else 0
     })
 
 
@@ -472,21 +543,13 @@ def backtest_available_dates():
         return jsonify({'error': 'ticker parameter required'}), 400
 
     engine = get_engine()
-    df = pd.read_sql(text("""
-        SELECT date FROM model_training_data
-        WHERE ticker = :ticker AND target IS NOT NULL
-        ORDER BY date
-    """), engine, params={'ticker': ticker})
+    model, feature_cols = load_model()
+    test_df = load_test_data(engine, feature_cols)
+    if test_df.empty:
+        return jsonify({'dates': []})
 
-    if df.empty:
-        return jsonify({'dates': [], 'tickers': []})
-
-    # Only return dates in the test period (last 20%)
-    all_data = pd.read_sql(text("SELECT DISTINCT date FROM model_training_data WHERE target IS NOT NULL ORDER BY date"), engine)
-    split_idx = int(len(all_data) * 0.8)
-    test_dates = set(all_data.iloc[split_idx:]['date'].astype(str).tolist())
-
-    dates = [str(d) for d in df['date'] if str(d) in test_dates]
+    ticker_df = test_df[test_df['ticker'] == ticker]
+    dates = ticker_df['date'].dt.strftime('%Y-%m-%d').tolist()
 
     return jsonify({'dates': dates})
 
@@ -537,17 +600,6 @@ def backtest_simulate():
     prob_up = proba[1]
     prob_down = proba[0]
 
-    # Actual outcome from target column
-    actual = int(row['target']) if pd.notna(row['target']) else None
-
-    # Feature values for display
-    features = []
-    for f in feature_cols:
-        features.append({
-            'name': f,
-            'value': round(float(row[f]), 4) if pd.notna(row[f]) else 0
-        })
-
     # Get actual close price on sim_date and T+5
     # Find T+5 date (next 5 trading days)
     df_future = pd.read_sql(text("""
@@ -558,10 +610,21 @@ def backtest_simulate():
 
     target_date_str = None
     actual_return_pct = None
+    actual = None
+    
     if len(df_future) > 0:
         target_date_str = str(df_future['date'].iloc[-1])
         cum_return = df_future['close_LogReturn'].sum()
         actual_return_pct = round((np.exp(cum_return) - 1) * 100, 2)
+        actual = 1 if cum_return > 0 else 0
+
+    # Feature values for display
+    features = []
+    for f in feature_cols:
+        features.append({
+            'name': f,
+            'value': round(float(row[f]), 4) if pd.notna(row[f]) else 0
+        })
 
     # Fetch close prices from daily_raw_data
     price_t0 = None
@@ -603,7 +666,7 @@ def backtest_simulate():
 
 @app.route('/api/backtest/ticker-detail')
 def backtest_ticker_detail():
-    """Get all predictions for a specific ticker in the test set"""
+    """Get all predictions for a specific ticker in the test set with confidence filtering"""
     model, feature_cols = load_model()
     if model is None:
         return jsonify({'error': 'Model not found'}), 400
@@ -612,12 +675,12 @@ def backtest_ticker_detail():
     if not ticker:
         return jsonify({'error': 'ticker parameter required'}), 400
 
-    engine = get_engine()
-    df = pd.read_sql(text("SELECT * FROM model_training_data ORDER BY date"), engine)
-    df = df.dropna(subset=['target'])
+    threshold_offset = request.args.get('threshold_offset', 0.0, type=float)
 
-    split_idx = int(len(df) * 0.8)
-    test_df = df.iloc[split_idx:].copy()
+    engine = get_engine()
+    test_df = load_test_data(engine, feature_cols)
+    if test_df.empty:
+        return jsonify({'error': 'No test data'}), 400
     ticker_df = test_df[test_df['ticker'] == ticker].copy()
 
     if ticker_df.empty:
@@ -625,6 +688,25 @@ def backtest_ticker_detail():
 
     ticker_df['y_pred'] = model.predict(ticker_df[feature_cols].values).astype(int)
     ticker_df['y_proba'] = model.predict_proba(ticker_df[feature_cols].values)[:, 1]
+
+    # Apply confidence filtering
+    if threshold_offset > 0.0:
+        lower_bound = 0.5 - threshold_offset
+        upper_bound = 0.5 + threshold_offset
+        ticker_df = ticker_df[(ticker_df['y_proba'] <= lower_bound) | (ticker_df['y_proba'] >= upper_bound)]
+
+    if ticker_df.empty:
+        return jsonify({
+            'ticker': ticker,
+            'accuracy': 0.0,
+            'precision': 0.0,
+            'recall': 0.0,
+            'f1_score': 0.0,
+            'total': 0,
+            'correct_count': 0,
+            'predictions': []
+        })
+
     ticker_df['correct'] = (ticker_df['target'] == ticker_df['y_pred']).astype(int)
 
     y_true = ticker_df['target'].values.astype(int)
@@ -637,7 +719,7 @@ def backtest_ticker_detail():
     predictions = []
     for _, row in ticker_df.iterrows():
         predictions.append({
-            'date': str(row['date']),
+            'date': row['date'].strftime('%Y-%m-%d'),
             'predicted': int(row['y_pred']),
             'actual': int(row['target']),
             'correct': int(row['correct']),

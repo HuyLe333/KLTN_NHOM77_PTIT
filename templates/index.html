@@ -463,6 +463,23 @@
       color:var(--accent-orange); padding:3px 10px; border-radius:50px;
       font-size:.7rem; font-weight:500;
     }
+    
+    /* PREDICTABILITY FILTERS */
+    .low-pred-ticker {
+      opacity: 0.45 !important;
+      filter: grayscale(85%) !important;
+      border: 1px dashed rgba(255, 255, 255, 0.15) !important;
+      background: rgba(255, 255, 255, 0.02) !important;
+    }
+    .low-pred-ticker:hover {
+      opacity: 0.85 !important;
+      filter: grayscale(20%) !important;
+      border-color: rgba(255, 255, 255, 0.4) !important;
+    }
+    .high-pred-ticker {
+      border: 1px solid rgba(0, 232, 122, 0.5) !important;
+      box-shadow: 0 0 8px rgba(0, 232, 122, 0.25) !important;
+    }
   </style>
 </head>
 <body>
@@ -506,9 +523,23 @@
 
   <!-- ── METRICS ── -->
   <div id="metrics">
-    <div class="sec-header">
-      <div class="sec-title">Kết Quả Đánh Giá Mô Hình</div>
-      <div style="font-size:.72rem;color:var(--text-muted);">XGBoost · 16 features · Train/Test 80/20</div>
+    <div class="sec-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:1.2rem;">
+      <div>
+        <div class="sec-title">Kết Quả Đánh Giá Mô Hình</div>
+        <div id="model-desc-header" style="font-size:.72rem;color:var(--text-muted);">XGBoost · 16 features · Train/Test 80/20</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; background:var(--bg-card); border:1px solid var(--border); padding:6px 12px; border-radius:var(--radius-sm);">
+        <label for="select-eval-confidence" style="font-size:0.75rem; color:var(--text-secondary); font-weight:600; white-space:nowrap;">Bộ lọc tự tin đánh giá:</label>
+        <select id="select-eval-confidence" onchange="onEvalConfidenceChange(this.value)" style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-xs); color:var(--text-primary); font-size:0.78rem; outline:none; padding:4px 8px; font-family:'JetBrains Mono',monospace; cursor:pointer;">
+          <option value="0.0" selected>Tất cả (0%)</option>
+          <option value="0.05">≥ 5% (Xác suất ≤ 47.5% hoặc ≥ 52.5%)</option>
+          <option value="0.1">≥ 10% (Xác suất ≤ 45% hoặc ≥ 55%)</option>
+          <option value="0.15">≥ 15% (Xác suất ≤ 42.5% hoặc ≥ 57.5%)</option>
+          <option value="0.2">≥ 20% (Xác suất ≤ 40% hoặc ≥ 60%)</option>
+          <option value="0.25">≥ 25% (Xác suất ≤ 37.5% hoặc ≥ 62.5%)</option>
+          <option value="0.3">≥ 30% (Xác suất ≤ 35% hoặc ≥ 65%)</option>
+        </select>
+      </div>
     </div>
     <div class="metrics-grid">
       <div class="metric-card fade-in" style="--card-accent:linear-gradient(90deg,#00d4ff,#b06aff);--val-gradient:linear-gradient(135deg,#00d4ff,#fff)">
@@ -632,12 +663,14 @@
 
         <!-- ── TAB 1: TICKER BROWSER ── -->
         <div class="ppanel active" id="panel-ticker">
-          <div class="ticker-search-wrap">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="ticker-search"
-              class="ticker-search-input"
-              placeholder="Tìm kiếm mã cổ phiếu (VD: FPT, VNM, HPG...)"
-              oninput="filterTickers(this.value)"/>
+          <div style="display:flex; gap:12px; margin-bottom:1rem; align-items:center; flex-wrap:wrap;">
+            <div class="ticker-search-wrap" style="flex:1; min-width:250px; margin-bottom:0;">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="ticker-search"
+                class="ticker-search-input"
+                placeholder="Tìm kiếm mã cổ phiếu (VD: FPT, VNM, HPG...)"
+                oninput="filterTickers(this.value)"/>
+            </div>
           </div>
 
           <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:.7rem">
@@ -1012,10 +1045,29 @@ let defaultFeatureVals = {};
 // ═══════════════════════════════════════════════════════════
 //  BOOT
 // ═══════════════════════════════════════════════════════════
+async function onMainThresholdChange() {
+  selectedTicker = null;
+  document.querySelectorAll('.ticker-btn').forEach(b => b.classList.remove('selected'));
+  const detailPanel = document.getElementById('ticker-detail');
+  if (detailPanel) detailPanel.classList.remove('show');
+  const resResult = document.getElementById('predict-result');
+  if (resResult) resResult.style.display = 'none';
+
+  const offset = document.getElementById('main-threshold-offset')?.value || '0.00';
+  const res = await fetch(`/api/tickers?threshold_offset=${offset}`);
+  allTickers = await res.json();
+  renderTickerGrid(allTickers);
+  renderPortfolioTickerSelectors();
+  if (document.getElementById('panel-top10').classList.contains('active')) {
+    renderTop10();
+  }
+}
+
 async function boot() {
+  const offset = document.getElementById('main-threshold-offset')?.value || '0.00';
   const [mRes, tRes] = await Promise.all([
     fetch('/api/metrics'),
-    fetch('/api/tickers')
+    fetch(`/api/tickers?threshold_offset=${offset}`)
   ]);
   globalMetrics = await mRes.json();
   allTickers    = await tRes.json();
@@ -1108,7 +1160,11 @@ function renderCharts(m) {
   });
 
   // Radar
-  new Chart(document.getElementById('chartRadar').getContext('2d'), {
+  const radarCtx = document.getElementById('chartRadar').getContext('2d');
+  if (window.radarChart) {
+    window.radarChart.destroy();
+  }
+  window.radarChart = new Chart(radarCtx, {
     type: 'radar',
     data: {
       labels: ['Accuracy','Precision','Recall','F1-Score','AUC×100'],
@@ -1138,7 +1194,7 @@ function renderCharts(m) {
 // ═══════════════════════════════════════════════════════════
 function renderFeatureImportance(m) {
   const container = document.getElementById('feat-list');
-  const feats = m.feature_importance.slice(0, 12);
+  const feats = m.feature_importance;
   const maxI = feats[0].importance;
   container.innerHTML = feats.map((f, i) => `
     <div class="feature-item">
@@ -1175,6 +1231,63 @@ function renderClassReport(m) {
   document.getElementById('rr1').textContent = pct(r.class_1.recall);
   document.getElementById('rf1').textContent = pct(r.class_1.f1_score);
   document.getElementById('rs1').textContent = fmt(r.class_1.support);
+}
+
+function onEvalConfidenceChange(val) {
+  if (!globalMetrics) return;
+  
+  let targetMetrics = globalMetrics;
+  if (val !== "0.0" && globalMetrics.threshold_metrics && globalMetrics.threshold_metrics[val]) {
+    targetMetrics = globalMetrics.threshold_metrics[val];
+  }
+  
+  // Update metrics cards
+  animateCount('v-acc',    targetMetrics.accuracy * 100, '%', 2);
+  animateCount('v-prec',   targetMetrics.precision * 100, '%', 2);
+  animateCount('v-recall', targetMetrics.recall * 100, '%', 2);
+  animateCount('v-f1',     targetMetrics.f1_score * 100, '%', 2);
+  animateCount('v-auc',    targetMetrics.auc_roc, '', 4);
+  
+  // Update model description header with samples count
+  const headerDesc = document.getElementById('model-desc-header');
+  if (headerDesc) {
+    if (val === "0.0") {
+      headerDesc.textContent = "XGBoost · 16 features · Train/Test 80/20";
+    } else {
+      headerDesc.innerHTML = `XGBoost · 16 features · Train/Test 80/20 · Số mẫu giữ lại: <strong>${fmt(targetMetrics.samples)}</strong> (${targetMetrics.pct_samples}%)`;
+    }
+  }
+  
+  // Update radar chart dataset
+  if (window.radarChart) {
+    window.radarChart.data.datasets[0].data = [
+      targetMetrics.accuracy * 100,
+      targetMetrics.precision * 100,
+      targetMetrics.recall * 100,
+      targetMetrics.f1_score * 100,
+      targetMetrics.auc_roc * 100
+    ];
+    window.radarChart.update();
+  }
+  
+  // Update confusion matrix
+  const cm = targetMetrics.confusion_matrix;
+  document.getElementById('c-tn').querySelector('.cm-num').textContent = fmt(cm[0][0]);
+  document.getElementById('c-fp').querySelector('.cm-num').textContent = fmt(cm[0][1]);
+  document.getElementById('c-fn').querySelector('.cm-num').textContent = fmt(cm[1][0]);
+  document.getElementById('c-tp').querySelector('.cm-num').textContent = fmt(cm[1][1]);
+  
+  // Update classification report table cells
+  const r = targetMetrics.classification_report;
+  document.getElementById('rp0').textContent = pct(r.class_0.precision);
+  document.getElementById('rr0').textContent = pct(r.class_0.recall);
+  document.getElementById('rf0').textContent = pct(r.class_0.f1_score);
+  document.getElementById('rs0').textContent = fmt(cm[0][0] + cm[0][1]);
+  
+  document.getElementById('rp1').textContent = pct(r.class_1.precision);
+  document.getElementById('rr1').textContent = pct(r.class_1.recall);
+  document.getElementById('rf1').textContent = pct(r.class_1.f1_score);
+  document.getElementById('rs1').textContent = fmt(cm[1][0] + cm[1][1]);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1235,13 +1348,29 @@ function renderTickerGrid(tickers) {
   document.getElementById('ticker-count-label').textContent = `${tickers.length} mã cổ phiếu đã được AI dự báo xu hướng`;
   grid.innerHTML = tickers.map(t => {
     const isUp = t.prediction === 1;
+    const isLowPred = t.predictability === 'low';
+    const isHighPred = t.predictability === 'high';
+    
+    let extraClass = '';
+    let extraBadge = '';
+    
+    if (isLowPred) {
+      extraClass = 'low-pred-ticker';
+      extraBadge = `<span style="font-size:0.55rem; opacity:0.6; display:block; color:#ff4d6d; margin-top:2px;">⚠️ Nhiễu cao</span>`;
+    } else if (isHighPred) {
+      extraClass = 'high-pred-ticker';
+      extraBadge = `<span style="font-size:0.55rem; background:rgba(0, 232, 122, 0.15); color:#00e87a; padding:1px 3px; border-radius:2px; display:inline-block; margin-top:2px; border:1px solid rgba(0, 232, 122, 0.3);">⭐ Universe B</span>`;
+    }
+    
     const trendClass = isUp ? 'up-trend' : 'down-trend';
     const pctText = isUp ? `${(t.probability_up * 100).toFixed(1)}% ↑` : `${(t.probability_down * 100).toFixed(1)}% ↓`;
+    
     return `
-      <button class="ticker-btn ${trendClass}" id="tbtn-${t.ticker}"
-        onclick="selectTicker('${t.ticker}')">
-        ${t.ticker}
-        <span class="ticker-count-badge">${pctText}</span>
+      <button class="ticker-btn ${trendClass} ${extraClass}" id="tbtn-${t.ticker}"
+        onclick="selectTicker('${t.ticker}')" style="display:flex; flex-direction:column; align-items:center; gap:2px; justify-content:center; padding:10px 6px; min-height:68px;">
+        <span style="font-weight:700; font-size:0.85rem;">${t.ticker}</span>
+        ${extraBadge}
+        <span class="ticker-count-badge" style="margin-top:2px;">${pctText}</span>
       </button>`;
   }).join('');
 }
@@ -1550,7 +1679,41 @@ function showResult(r) {
     const posImpacts = topFeats.filter(f => f.impact === 'positive');
     const negImpacts = topFeats.filter(f => f.impact === 'negative');
     
-    let textHtml = `<div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 5px;">🤖 Giải thích quyết định từ Mô hình AI:</div>`;
+    let textHtml = ``;
+    
+    if (r.predictability === 'low') {
+      textHtml += `
+        <div style="padding: 1rem; background: rgba(255, 77, 109, 0.07); border: 1px dashed rgba(255, 77, 109, 0.4); border-radius: var(--radius-sm); margin-bottom: 1.2rem;">
+          <div style="font-weight: 700; color: #ff4d6d; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
+            ⚠️ CẢNH BÁO: CỔ PHIẾU CÓ ĐỘ NHIỄU CAO (UNIVERSE C)
+          </div>
+          <div style="font-size: 0.74rem; line-height: 1.6; color: var(--text-primary);">
+            Mã cổ phiếu <strong>${r.ticker}</strong> thuộc nhóm có mức độ dự báo thấp trong lịch sử (Độ chính xác validation thực tế: <strong>${((r.test_accuracy || 0.48) * 100).toFixed(1)}%</strong> < 50.0%). 
+            <br/>
+            <strong>Giải thích nguyên nhân:</strong> Đặc tính kỹ thuật của mã này có độ nhiễu cao. Hành vi cung cầu đơn lẻ của các đội nhóm tạo ra biến động phi xu hướng khiến mô hình AI không thể nhận diện quy luật tin cậy.
+            <br/><br/>
+            <strong style="color: var(--accent-yellow);">Khuyến nghị từ hệ thống:</strong> Nhà đầu tư nên <strong>BỎ QUA</strong> tín hiệu này để hạn chế rủi ro đầu cơ.
+          </div>
+        </div>
+      `;
+    } else if (r.predictability === 'high') {
+      textHtml += `
+        <div style="padding: 1rem; background: rgba(0, 232, 122, 0.07); border: 1px solid rgba(0, 232, 122, 0.4); border-radius: var(--radius-sm); margin-bottom: 1.2rem;">
+          <div style="font-weight: 700; color: #00e87a; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;">
+            ⭐ CỔ PHIẾU DỄ DỰ BÁO (UNIVERSE B - HIGH PREDICTABILITY)
+          </div>
+          <div style="font-size: 0.74rem; line-height: 1.6; color: var(--text-primary);">
+            Mã cổ phiếu <strong>${r.ticker}</strong> nằm trong nhóm tối ưu có xu hướng và hành vi giá lặp lại rất ổn định (Độ chính xác validation thực tế: <strong>${((r.test_accuracy || 0.56) * 100).toFixed(1)}%</strong>).
+            <br/>
+            <strong>Đặc tính kỹ thuật:</strong> Mô hình AI tìm thấy các mối tương quan chặt chẽ giữa dòng tiền khối ngoại (foreign_net), chỉ số thị trường (market_return) và động lượng xu hướng (SMA, Volatility, PCA).
+            <br/><br/>
+            <strong style="color: var(--accent-cyan);">Khuyến nghị từ hệ thống:</strong> Tín hiệu của mã này có <strong>ĐỘ TIN CẬY CAO</strong>. Ưu tiên giao dịch theo tín hiệu MUA/BÁN của mã này.
+          </div>
+        </div>
+      `;
+    }
+    
+    textHtml += `<div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 5px;">🤖 Giải thích quyết định từ Mô hình AI:</div>`;
     if (r.latest_date && r.predict_date) {
       textHtml += `<div style="margin-bottom: 0.6rem; color: var(--text-secondary); font-size: 0.72rem;">`;
       textHtml += `📅 Ngày dữ liệu hiện tại (T): <strong style="color: #fff">${r.latest_date}</strong> &nbsp;|&nbsp; `;

@@ -87,12 +87,17 @@ def main():
         event = session.Fetch_Trading_Data(
             realtime=False,
             tickers=tickers,
-            fields=["open", "high", "low", "close", "volume"],
+            fields=["open", "high", "low", "close", "volume", "fn"],
             adjusted=True,
             from_date=from_date_str,
             by="1d"
         )
         df_tickers_raw = event.get_data()
+        if not df_tickers_raw.empty:
+            if 'fn' in df_tickers_raw.columns:
+                df_tickers_raw.rename(columns={'fn': 'foreign_net'}, inplace=True)
+            else:
+                df_tickers_raw['foreign_net'] = 0.0
         print(f"    OK Tickers data shape: {df_tickers_raw.shape}")
         
         # Fetch VNINDEX price
@@ -206,15 +211,16 @@ def main():
         df_merged['sma_50_LogReturn'] = np.log(sma50 / sma50.shift(1))
         df_merged['volume_LogReturn'] = np.log(volume / volume.shift(1))
         
-        # ATR 14
+        # ATR 14 (Normalized: ATR 14 / close)
         tr = pd.concat([
             high - low,
             (high - close.shift()).abs(),
             (low - close.shift()).abs()
         ], axis=1).max(axis=1)
-        df_merged['atr_14'] = tr.rolling(14).mean()
+        df_merged['atr_14'] = tr.rolling(14).mean() / close
         
-        df_merged['high_low'] = index_close
+        # high_low: (high - low) / close
+        df_merged['high_low'] = (high - low) / close
         df_merged['market_return'] = index_close.pct_change(1)
         
         # Clean infinite and null values from feature calculations
@@ -261,20 +267,21 @@ def main():
                 'PCA_ShortReturns': float(row['PCA_ShortReturns']),
                 'atr_14': float(row['atr_14']),
                 'high_low': float(row['high_low']),
-                'market_return': float(row['market_return'])
+                'market_return': float(row['market_return']),
+                'foreign_net': float(row.get('foreign_net', 0.0))
             })
             
         # Get latest day row for prediction
         latest_row = df_features.iloc[-1]
         latest_date = latest_row['date']
         
-        # Features for model input (16 columns)
+        # Features for model input (17 columns)
         feature_cols_model = [
             'price_vs_sma50', 'volatility_20', 'volume_ratio_20',
             'return_3d', 'return_5d', 'return_10d', 'return_20d',
             'sma_50_LogReturn', 'volume_LogReturn',
             'PCA_Trend', 'PCA_Oscillators', 'PCA_MACD', 'PCA_ShortReturns',
-            'atr_14', 'high_low', 'market_return'
+            'atr_14', 'high_low', 'market_return', 'foreign_net'
         ]
         
         X_pred = np.array([[float(latest_row[f]) for f in feature_cols_model]])

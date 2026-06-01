@@ -56,6 +56,10 @@ def main():
     # 3. Create Tables
     print("\n[3/5] Creating tables...")
     
+    # Drop tables to apply schema changes
+    db_cursor.execute("DROP TABLE IF EXISTS model_training_data;")
+    db_cursor.execute("DROP TABLE IF EXISTS daily_normalized_data;")
+    
     # Table 1: model_training_data
     db_cursor.execute("""
     CREATE TABLE IF NOT EXISTS model_training_data (
@@ -78,6 +82,7 @@ def main():
         atr_14 DOUBLE,
         high_low DOUBLE,
         market_return DOUBLE,
+        foreign_net DOUBLE,
         target INT,
         PRIMARY KEY (ticker, date)
     ) ENGINE=InnoDB;
@@ -119,6 +124,7 @@ def main():
         atr_14 DOUBLE,
         high_low DOUBLE,
         market_return DOUBLE,
+        foreign_net DOUBLE,
         PRIMARY KEY (ticker, date)
     ) ENGINE=InnoDB;
     """)
@@ -152,6 +158,16 @@ def main():
     df_raw = pd.read_excel("data2.xlsx")
     print(f"    OK Loaded data2.xlsx in {time.time() - t0:.2f} seconds. Rows: {df_raw.shape[0]}")
 
+    print("    Loading 'foreign_net' from the Excel export file...")
+    excel_path = r"D:\Khóa luận tốt nghiệp\phân tích data\data v1\database_export_20260518_1159.xlsx"
+    df_indicators = pd.read_excel(
+        excel_path,
+        sheet_name='technical_indicators',
+        usecols=['ticker', 'date', 'foreign_net']
+    )
+    df_indicators['date'] = pd.to_datetime(df_indicators['date'])
+    df_indicators = df_indicators.drop_duplicates(subset=['ticker', 'date'])
+
     # Process and build target target
     df = df_raw.copy()
     if 'ticker' not in df.columns or 'date' not in df.columns:
@@ -160,6 +176,11 @@ def main():
 
     # Clean date
     df['date'] = pd.to_datetime(df['date'])
+
+    # Merge foreign_net
+    print("    Merging 'foreign_net' into training data...")
+    df = pd.merge(df, df_indicators, on=['ticker', 'date'], how='left')
+    df['foreign_net'] = df['foreign_net'].fillna(0.0)
 
     # Compute target labels (T+5 return prediction target)
     print("    Calculating target labels...")
@@ -176,7 +197,7 @@ def main():
     train_cols = [
         'ticker', 'date', 'close_LogReturn', 'price_vs_sma50', 'volatility_20', 'volume_ratio_20',
         'return_3d', 'return_5d', 'return_10d', 'return_20d', 'sma_50_LogReturn', 'volume_LogReturn',
-        'PCA_Trend', 'PCA_Oscillators', 'PCA_MACD', 'PCA_ShortReturns', 'atr_14', 'high_low', 'market_return', 'target'
+        'PCA_Trend', 'PCA_Oscillators', 'PCA_MACD', 'PCA_ShortReturns', 'atr_14', 'high_low', 'market_return', 'foreign_net', 'target'
     ]
     df_db = df[train_cols].dropna()
     print(f"    OK Cleaned training rows for DB ingest: {df_db.shape[0]}")

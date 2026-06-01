@@ -135,6 +135,29 @@
     <div class="loading" id="backtest-loading">⏳ Đang chạy Backtest trên tập Test...</div>
 
     <div id="backtest-content" style="display:none;">
+      <!-- Bộ lọc Độ tin cậy (Confidence Threshold Filter) -->
+      <div class="card" style="margin-bottom:1.5rem; border-color:rgba(0,212,255,0.25);">
+        <div class="card-title">⚙️ Bộ lọc Độ tin cậy (Confidence Threshold Filter)</div>
+        <p style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:0.8rem;">
+          Mô hình dự báo có xác suất tăng/giảm từ 0% đến 100%. Áp dụng bộ lọc này để chỉ giao dịch và đánh giá các tín hiệu có độ tự tin cao (xác suất tăng xa mức 50% trung hòa).
+        </p>
+        <div style="display:flex; gap:20px; align-items:center; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <label style="font-size:0.75rem; color:var(--text-secondary);">Ngưỡng lệch (Offset):</label>
+            <select id="bt-threshold-offset" class="sim-select" onchange="onThresholdChange()" style="padding:6px 12px;">
+              <option value="0.00" selected>Không lọc (Toàn bộ dữ liệu)</option>
+              <option value="0.05">≥ 5.0% (Xác suất ≤ 45.0% hoặc ≥ 55.0%)</option>
+              <option value="0.10">≥ 10.0% (Xác suất ≤ 40.0% hoặc ≥ 60.0%)</option>
+              <option value="0.15">≥ 15.0% (Xác suất ≤ 35.0% hoặc ≥ 65.0%)</option>
+              <option value="0.20">≥ 20.0% (Xác suất ≤ 30.0% hoặc ≥ 70.0%) [Khuyên dùng]</option>
+              <option value="0.25">≥ 25.0% (Xác suất ≤ 25.0% hoặc ≥ 75.0%) [Tin cậy cao]</option>
+              <option value="0.30">≥ 30.0% (Xác suất ≤ 20.0% hoặc ≥ 80.0%) [Cực kỳ tin cậy]</option>
+            </select>
+          </div>
+          <div id="bt-filtered-info" style="font-size:0.75rem; color:var(--accent-cyan); font-weight:600;"></div>
+        </div>
+      </div>
+
       <div class="kpi-row" id="bt-kpis"></div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
@@ -268,12 +291,19 @@ function switchTab(tab) {
 let timelineChart = null;
 let cumulativeChart = null;
 
+function onThresholdChange() {
+  const detailPanel = document.getElementById('bt-ticker-detail-panel');
+  if (detailPanel) detailPanel.style.display = 'none';
+  loadBacktest();
+}
+
 async function loadBacktest() {
   try {
+    const offset = document.getElementById('bt-threshold-offset')?.value || '0.02';
     const [sumRes, tickerRes, tlRes] = await Promise.all([
-      fetch('/api/backtest/summary'),
-      fetch('/api/backtest/by-ticker'),
-      fetch('/api/backtest/timeline')
+      fetch(`/api/backtest/summary?threshold_offset=${offset}`),
+      fetch(`/api/backtest/by-ticker?threshold_offset=${offset}`),
+      fetch(`/api/backtest/timeline?threshold_offset=${offset}`)
     ]);
     const summary = await sumRes.json();
     const tickers = await tickerRes.json();
@@ -281,6 +311,18 @@ async function loadBacktest() {
 
     document.getElementById('backtest-loading').style.display = 'none';
     document.getElementById('backtest-content').style.display = 'block';
+
+    // Filter info display
+    const infoEl = document.getElementById('bt-filtered-info');
+    if (infoEl) {
+      if (offset === '0.00') {
+        infoEl.textContent = 'Đang hiển thị toàn bộ tập dữ liệu (Không lọc)';
+      } else {
+        const totalUnfiltered = 30206;
+        const coverage = ((summary.total_samples / totalUnfiltered) * 100).toFixed(1);
+        infoEl.textContent = `Lọc hoạt động: ${summary.total_samples.toLocaleString()} / ${totalUnfiltered.toLocaleString()} mẫu (${coverage}% cơ hội giao dịch)`;
+      }
+    }
 
     // KPIs
     const kpiData = [
@@ -317,7 +359,7 @@ async function loadBacktest() {
       options:{
         responsive:true,maintainAspectRatio:false,
         scales:{
-          y:{min:40,max:70,ticks:{callback:v=>v+'%',color:'#7a9cc0',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
+          y:{min:30,max:80,ticks:{callback:v=>v+'%',color:'#7a9cc0',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
           x:{ticks:{color:'#7a9cc0',font:{size:9},maxTicksLimit:12},grid:{display:false}}
         },
         plugins:{legend:{display:false}}
@@ -340,7 +382,8 @@ async function loadBacktest() {
 
 async function loadPredictions(page) {
   const ticker = document.getElementById('bt-search').value.trim().toUpperCase();
-  const url = `/api/backtest/predictions?page=${page}&per_page=30${ticker ? '&ticker='+ticker : ''}`;
+  const offset = document.getElementById('bt-threshold-offset')?.value || '0.02';
+  const url = `/api/backtest/predictions?page=${page}&per_page=30${ticker ? '&ticker='+ticker : ''}&threshold_offset=${offset}`;
   const res = await fetch(url);
   const data = await res.json();
 
@@ -603,7 +646,8 @@ async function showTickerDetail(ticker) {
   document.querySelectorAll('.ticker-cell').forEach(c => c.classList.remove('selected'));
   event.target.closest('.ticker-cell')?.classList.add('selected');
 
-  const res = await fetch(`/api/backtest/ticker-detail?ticker=${ticker}`);
+  const offset = document.getElementById('bt-threshold-offset')?.value || '0.02';
+  const res = await fetch(`/api/backtest/ticker-detail?ticker=${ticker}&threshold_offset=${offset}`);
   const d = await res.json();
   if (d.error) return;
 
