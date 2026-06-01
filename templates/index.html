@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="XGBoost Stock Market Prediction Dashboard - Phân tích và dự đoán xu hướng giá cổ phiếu Việt Nam"/>
+  <title>XGBoost Stock Predictor Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg-primary:    #080c16;
+      --bg-secondary:  #0d1525;
+      --bg-card:       #111b30;
+      --bg-card-hover: #172240;
+      --bg-glass:      rgba(17,27,48,0.7);
+      --accent-cyan:   #00d4ff;
+      --accent-green:  #00e87a;
+      --accent-red:    #ff4d6d;
+      --accent-yellow: #ffc94a;
+      --accent-purple: #b06aff;
+      --accent-orange: #ff7c3a;
+      --text-primary:  #e2eeff;
+      --text-secondary:#7a9cc0;
+      --text-muted:    #3d5470;
+      --border:        rgba(0,212,255,0.10);
+      --border-bright: rgba(0,212,255,0.28);
+      --radius:        16px;
+      --radius-sm:     10px;
+      --radius-xs:     7px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family:'Inter',sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    /* ── ANIMATED BG ── */
+    body::before {
+      content:'';
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background:
+        radial-gradient(ellipse 60% 50% at 15% 15%, rgba(0,212,255,0.055) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 85% 85%, rgba(176,106,255,0.055) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(0,232,122,0.025) 0%, transparent 60%);
+      pointer-events:none; z-index:0;
+      animation: bgShift 20s ease-in-out infinite alternate;
+    }
+    @keyframes bgShift {
+      from { opacity:0.7; }
+      to   { opacity:1; }
+    }
+
+    /* ── HEADER ── */
+    header {
+      position:sticky; top:0; z-index:100;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 2rem; height:68px;
+      background:rgba(8,12,22,0.85);
+      backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--border);
+    }
+    .logo { display:flex; align-items:center; gap:12px; }
+    .logo-icon {
+      width:40px; height:40px;
+      background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));
+      border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:18px;
+      box-shadow:0 0 18px rgba(0,212,255,0.35);
+    }
+    .logo h1 {
+      font-size:1.05rem; font-weight:700;
+      background:linear-gradient(135deg,var(--accent-cyan),#d0eeff);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .logo p { font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.1em; }
+
+    .nav-pills { display:flex; gap:6px; }
+    .nav-pill {
+      background:transparent; border:1px solid var(--border);
+      color:var(--text-secondary); padding:6px 14px;
+      border-radius:50px; font-size:0.75rem; font-weight:500;
+      cursor:pointer; transition:all .2s;
+      text-decoration:none;
+    }
+    .nav-pill:hover, .nav-pill.active {
+      background:rgba(0,212,255,0.1);
+      border-color:var(--accent-cyan); color:var(--accent-cyan);
+    }
+    .header-right { display:flex; align-items:center; gap:10px; }
+    .status-badge {
+      background:rgba(0,232,122,0.1);
+      border:1px solid rgba(0,232,122,0.3);
+      color:var(--accent-green);
+      padding:5px 12px; border-radius:50px;
+      font-size:0.72rem; font-weight:600;
+      display:flex; align-items:center; gap:6px;
+    }
+    .dot { width:6px; height:6px; background:var(--accent-green); border-radius:50%; animation:blink 1.5s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+    /* ── MAIN ── */
+    main {
+      position:relative; z-index:1;
+      max-width:1440px; margin:0 auto;
+      padding:2rem 2rem 5rem;
+    }
+
+    /* ── SECTION HEADER ── */
+    .sec-header {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:1rem;
+    }
+    .sec-title {
+      font-size:0.68rem; font-weight:600;
+      color:var(--accent-cyan); letter-spacing:.15em; text-transform:uppercase;
+      display:flex; align-items:center; gap:8px;
+    }
+    .sec-title::after {
+      content:''; width:80px; height:1px;
+      background:linear-gradient(to right,var(--border-bright),transparent);
+    }
+
+    /* ── METRIC CARDS ── */
+    .metrics-grid {
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:1rem; margin-bottom:2rem;
+    }
+    .metric-card {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:var(--radius); padding:1.3rem 1.4rem;
+      position:relative; overflow:hidden;
+      transition:all .3s cubic-bezier(.4,0,.2,1); cursor:default;
+    }
+    .metric-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:2px;
+      background:var(--card-accent, linear-gradient(90deg,var(--accent-cyan),var(--accent-purple)));
+    }
+    .metric-card:hover {
+      background:var(--bg-card-hover);
+      border-color:var(--border-bright);
+      transform:translateY(-3px);
+      box-shadow:0 10px 35px rgba(0,0,0,.35);
+    }
+    .metric-label { font-size:.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.07em; margin-bottom:.5rem; }
+    .metric-value {
+      font-size:1.9rem; font-weight:800;
+      font-family:'JetBrains Mono',monospace; line-height:1;
+      background:var(--val-gradient, linear-gradient(135deg,var(--accent-cyan),#fff));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .metric-sub { font-size:.68rem; color:var(--text-muted); margin-top:.4rem; }
+
+    /* ── CHARTS GRID ── */
+    .charts-grid {
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:1.4rem; margin-bottom:2rem;
+    }
+    .chart-card {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:var(--radius); padding:1.4rem;
+      transition:border-color .3s;
+    }
+    .chart-card:hover { border-color:var(--border-bright); }
+    .chart-title {
+      font-size:.85rem; font-weight:600; color:var(--text-primary);
+      margin-bottom:1.1rem; display:flex; align-items:center; gap:7px;
+    }
+    .chart-wrap { position:relative; height:250px; }
+
+    /* ── FEATURE IMPORTANCE ── */
+    .feature-card {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:var(--radius); padding:1.4rem; margin-bottom:2rem;
+    }
+    .feature-list { display:flex; flex-direction:column; gap:9px; margin-top:.8rem; }
+    .feature-item {
+      display:grid; grid-template-columns:195px 1fr 58px;
+      align-items:center; gap:12px;
+    }
+    .feature-name {
+      font-size:.78rem; font-family:'JetBrains Mono',monospace;
+      color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .f-bar-bg { height:7px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden; }
+    .f-bar-fill {
+      height:100%; border-radius:4px;
+      background:linear-gradient(90deg,var(--accent-cyan),var(--accent-purple));
+      transition:width 1.3s cubic-bezier(.4,0,.2,1);
+    }
+    .f-pct { font-size:.75rem; font-family:'JetBrains Mono',monospace; color:var(--accent-cyan); text-align:right; }
+
+    /* ── BOTTOM GRID ── */
+    .bottom-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.4rem; margin-bottom:2rem; }
+
+    /* ── CONFUSION MATRIX ── */
+    .cm-grid {
+      display:grid; grid-template-columns:auto 1fr 1fr;
+      gap:7px; margin-top:1rem; align-items:center;
+    }
+    .cm-axis { font-size:.62rem; color:var(--text-muted); text-align:center; padding:3px; }
+    .cm-cell {
+      padding:1rem; border-radius:var(--radius-xs);
+      text-align:center; font-family:'JetBrains Mono',monospace;
+    }
+    .cm-num { font-size:1.6rem; font-weight:700; display:block; }
+    .cm-lbl { font-size:.6rem; color:var(--text-muted); margin-top:3px; }
+    .cm-tp { background:rgba(0,232,122,.12); border:1px solid rgba(0,232,122,.3); color:var(--accent-green); }
+    .cm-tn { background:rgba(0,232,122,.12); border:1px solid rgba(0,232,122,.3); color:var(--accent-green); }
+    .cm-fp { background:rgba(255,77,109,.12); border:1px solid rgba(255,77,109,.3); color:var(--accent-red); }
+    .cm-fn { background:rgba(255,77,109,.12); border:1px solid rgba(255,77,109,.3); color:var(--accent-red); }
+
+    /* ── REPORT TABLE ── */
+    .report-table { width:100%; border-collapse:collapse; font-size:.82rem; margin-top:.8rem; }
+    .report-table th {
+      font-size:.65rem; color:var(--text-muted); text-transform:uppercase;
+      letter-spacing:.1em; padding:7px 10px; border-bottom:1px solid var(--border); text-align:center;
+    }
+    .report-table td { padding:9px 10px; text-align:center; border-bottom:1px solid rgba(255,255,255,.04); font-family:'JetBrains Mono',monospace; }
+    .report-table tr:hover td { background:rgba(255,255,255,.03); }
+    .tag-up   { background:rgba(0,232,122,.1);  color:var(--accent-green); padding:2px 10px; border-radius:50px; font-size:.72rem; font-weight:600; }
+    .tag-down { background:rgba(255,77,109,.1);  color:var(--accent-red);   padding:2px 10px; border-radius:50px; font-size:.72rem; font-weight:600; }
+
+    /* ── INFO PILLS ── */
+    .info-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:1rem; }
+    .info-item { background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:var(--radius-xs); padding:.9rem; }
+    .info-lbl  { font-size:.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.3rem; }
+    .info-val  { font-family:'JetBrains Mono',monospace; font-size:.88rem; color:var(--accent-cyan); font-weight:600; }
+
+    /* ══════════════════════════════════════════
+       ──  TICKER SELECTOR + PREDICT PANEL  ──
+    ══════════════════════════════════════════ */
+    .predict-section {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:var(--radius); overflow:hidden; margin-bottom:2rem;
+    }
+
+    /* Tab bar */
+    .predict-tabs {
+      display:flex; border-bottom:1px solid var(--border);
+      background:rgba(0,0,0,.2);
+    }
+    .ptab {
+      flex:1; padding:.9rem 1rem; text-align:center;
+      font-size:.82rem; font-weight:600; color:var(--text-secondary);
+      cursor:pointer; border:none; background:transparent;
+      transition:all .2s; position:relative;
+    }
+    .ptab:hover { color:var(--text-primary); }
+    .ptab.active {
+      color:var(--accent-cyan);
+      background:rgba(0,212,255,.06);
+    }
+    .ptab.active::after {
+      content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+      background:var(--accent-cyan);
+    }
+
+    /* Panels */
+    .predict-panels { padding:1.5rem; }
+    .ppanel { display:none; }
+    .ppanel.active { display:block; }
+
+    /* ── TICKER SEARCH ── */
+    .ticker-search-wrap {
+      position:relative; margin-bottom:1.2rem;
+    }
+    .ticker-search-input {
+      width:100%; padding:11px 16px 11px 44px;
+      background:rgba(255,255,255,.05); border:1px solid var(--border);
+      border-radius:var(--radius-sm); color:var(--text-primary);
+      font-family:'JetBrains Mono',monospace; font-size:.92rem;
+      outline:none; transition:border-color .2s;
+    }
+    .ticker-search-input:focus { border-color:var(--accent-cyan); box-shadow:0 0 0 3px rgba(0,212,255,.1); }
+    .ticker-search-input::placeholder { color:var(--text-muted); }
+    .search-icon {
+      position:absolute; left:14px; top:50%; transform:translateY(-50%);
+      font-size:1rem; color:var(--text-muted); pointer-events:none;
+    }
+
+    /* Ticker grid */
+    .ticker-grid {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
+      gap:7px; max-height:280px; overflow-y:auto;
+      padding-right:4px;
+    }
+    .ticker-grid::-webkit-scrollbar { width:4px; }
+    .ticker-grid::-webkit-scrollbar-track { background:transparent; }
+    .ticker-grid::-webkit-scrollbar-thumb { background:var(--text-muted); border-radius:2px; }
+
+    .ticker-btn {
+      background:rgba(255,255,255,.04); border:1px solid var(--border);
+      border-radius:var(--radius-xs); padding:8px 6px;
+      text-align:center; cursor:pointer; transition:all .2s;
+      font-size:.76rem; font-weight:600; color:var(--text-secondary);
+      font-family:'JetBrains Mono',monospace;
+    }
+    .ticker-btn:hover {
+      background:rgba(0,212,255,.08); border-color:rgba(0,212,255,.3);
+      color:var(--accent-cyan); transform:translateY(-1px);
+    }
+    .ticker-btn.up-trend {
+      border-color: rgba(0, 232, 122, 0.15);
+      background: rgba(0, 232, 122, 0.02);
+      color: rgba(0, 232, 122, 0.85);
+    }
+    .ticker-btn.up-trend:hover {
+      border-color: rgba(0, 232, 122, 0.5);
+      background: rgba(0, 232, 122, 0.08);
+      color: var(--accent-green);
+    }
+    .ticker-btn.down-trend {
+      border-color: rgba(255, 77, 109, 0.15);
+      background: rgba(255, 77, 109, 0.02);
+      color: rgba(255, 77, 109, 0.85);
+    }
+    .ticker-btn.down-trend:hover {
+      border-color: rgba(255, 77, 109, 0.5);
+      background: rgba(255, 77, 109, 0.08);
+      color: var(--accent-red);
+    }
+    .ticker-btn.selected {
+      background: rgba(0, 212, 255, 0.15) !important;
+      border-color: var(--accent-cyan) !important;
+      color: var(--accent-cyan) !important;
+      box-shadow: 0 0 12px rgba(0,212,255,0.2) !important;
+    }
+    .ticker-count-badge {
+      font-size:.56rem; color:inherit;
+      display:block; margin-top:2px; font-weight:400;
+    }
+
+    /* ── TICKER DETAIL CARD ── */
+    .ticker-detail {
+      display:none; margin-top:1.2rem;
+      background:rgba(0,212,255,.05); border:1px solid rgba(0,212,255,.2);
+      border-radius:var(--radius-sm); padding:1.2rem;
+      animation:slideDown .25s ease;
+    }
+    .ticker-detail.show { display:block; }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+
+    .ticker-detail-header {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:1rem;
+    }
+    .ticker-name-large {
+      font-size:1.8rem; font-weight:800;
+      font-family:'JetBrains Mono',monospace;
+      color:var(--accent-cyan);
+    }
+    .ticker-stats-row {
+      display:flex; gap:1rem; flex-wrap:wrap;
+    }
+    .tstat {
+      background:rgba(0,0,0,.2); border-radius:var(--radius-xs);
+      padding:.5rem .9rem;
+    }
+    .tstat-lbl { font-size:.6rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em; }
+    .tstat-val { font-size:.95rem; font-weight:600; font-family:'JetBrains Mono',monospace; }
+
+    /* Mini donut */
+    .ticker-donut-wrap { width:70px; height:70px; flex-shrink:0; }
+
+    /* ── PREDICTION FORM ── */
+    .predict-intro { font-size:.82rem; color:var(--text-secondary); margin-bottom:1rem; }
+    .predict-fields {
+      display:grid; grid-template-columns:repeat(4,1fr);
+      gap:10px; margin-bottom:1.2rem;
+    }
+    .field-grp { display:flex; flex-direction:column; gap:3px; }
+    .field-grp label {
+      font-size:.62rem; font-family:'JetBrains Mono',monospace;
+      color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em;
+    }
+    .field-grp input {
+      background:rgba(255,255,255,.04); border:1px solid var(--border);
+      border-radius:6px; padding:7px 10px;
+      color:var(--text-primary); font-family:'JetBrains Mono',monospace;
+      font-size:.83rem; outline:none; transition:border-color .2s;
+    }
+    .field-grp input:focus { border-color:var(--accent-cyan); box-shadow:0 0 0 2px rgba(0,212,255,.09); }
+
+    .predict-actions { display:flex; align-items:center; gap:10px; }
+    .btn-predict {
+      background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));
+      color:#fff; border:none; padding:11px 28px;
+      border-radius:8px; font-size:.88rem; font-weight:600;
+      cursor:pointer; transition:all .25s;
+      display:flex; align-items:center; gap:7px;
+    }
+    .btn-predict:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(0,212,255,.4); }
+    .btn-reset {
+      background:transparent; border:1px solid var(--border);
+      color:var(--text-secondary); padding:11px 20px;
+      border-radius:8px; font-size:.85rem; cursor:pointer;
+      transition:all .2s;
+    }
+    .btn-reset:hover { border-color:var(--accent-cyan); color:var(--accent-cyan); }
+
+    /* ── PREDICT RESULT ── */
+    .predict-result {
+      display:none; margin-top:1.2rem; padding:1.3rem;
+      border-radius:var(--radius-sm); animation:slideDown .3s ease;
+    }
+    .result-up   { background:rgba(0,232,122,.07); border:1px solid rgba(0,232,122,.3); }
+    .result-down { background:rgba(255,77,109,.07); border:1px solid rgba(255,77,109,.3); }
+    .result-label { font-size:1.35rem; font-weight:700; margin-bottom:.6rem; }
+    .proba-bars { display:flex; flex-direction:column; gap:7px; margin-top:.8rem; }
+    .proba-row { display:flex; align-items:center; gap:10px; font-size:.8rem; }
+    .proba-lbl { width:55px; color:var(--text-secondary); }
+    .proba-track { flex:1; height:6px; background:rgba(255,255,255,.05); border-radius:3px; overflow:hidden; }
+    .bar-up   { height:100%; background:var(--accent-green); border-radius:3px; transition:width .6s ease; }
+    .bar-down { height:100%; background:var(--accent-red);   border-radius:3px; transition:width .6s ease; }
+    .proba-pct { width:48px; text-align:right; font-family:'JetBrains Mono',monospace; color:var(--text-secondary); font-size:.76rem; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background:var(--text-muted); border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:var(--text-secondary); }
+
+    /* ── FADE IN ── */
+    .fade-in { animation:fadeIn .55s ease forwards; opacity:0; }
+    @keyframes fadeIn { to{opacity:1} }
+    .fade-in:nth-child(1){animation-delay:.05s}
+    .fade-in:nth-child(2){animation-delay:.1s}
+    .fade-in:nth-child(3){animation-delay:.15s}
+    .fade-in:nth-child(4){animation-delay:.2s}
+    .fade-in:nth-child(5){animation-delay:.25s}
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:1100px){
+      .metrics-grid{grid-template-columns:repeat(3,1fr)}
+      .charts-grid,.bottom-grid{grid-template-columns:1fr}
+    }
+    @media(max-width:768px){
+      .metrics-grid{grid-template-columns:repeat(2,1fr)}
+      .predict-fields{grid-template-columns:1fr 1fr}
+      .info-grid{grid-template-columns:1fr 1fr}
+      header{padding:0 1rem}
+      main{padding:1.5rem 1rem 3rem}
+      .nav-pills{display:none}
+      #top10-grid-container{grid-template-columns:1fr !important;}
+      #portfolio-grid-container{grid-template-columns:1fr !important;}
+      #portfolio-charts-container{grid-template-columns:1fr !important;}
+    }
+
+    /* REMOVED BADGE */
+    .removed-badge {
+      display:inline-flex; align-items:center; gap:5px;
+      background:rgba(255,124,58,.1); border:1px solid rgba(255,124,58,.3);
+      color:var(--accent-orange); padding:3px 10px; border-radius:50px;
+      font-size:.7rem; font-weight:500;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">📈</div>
+    <div>
+      <h1>XGBoost Stock Predictor</h1>
+      <p>Machine Learning · Financial Analytics · Vietnam Market</p>
+    </div>
+  </div>
+  <nav class="nav-pills">
+    <a href="#metrics"   class="nav-pill active">Metrics</a>
+    <a href="#charts"    class="nav-pill">Charts</a>
+    <a href="#features"  class="nav-pill">Features</a>
+    <a href="#predict"   class="nav-pill">Dự Đoán</a>
+  </nav>
+  <div class="header-right">
+    <div class="status-badge"><span class="dot"></span>Model Active</div>
+  </div>
+</header>
+
+<!-- ══ MAIN ══ -->
+<main>
+{% if metrics %}
+
+  <!-- ── DATA LEAKAGE NOTICE ── -->
+  <div style="display:flex;align-items:center;gap:10px;padding:.9rem 1.2rem;
+              background:rgba(255,124,58,.07);border:1px solid rgba(255,124,58,.2);
+              border-radius:var(--radius-sm);margin-bottom:1.5rem;font-size:.8rem;color:var(--text-secondary);">
+    <span style="font-size:1.1rem;">🛡️</span>
+    <div>
+      <strong style="color:var(--accent-orange);">Data Leakage đã được xử lý.</strong>
+      Đã loại bỏ các cột có tương quan trực tiếp với target:
+      <span class="removed-badge">✕ rsi_14_LogReturn</span>
+      <span class="removed-badge" style="margin-left:5px;">✕ return_1d</span>
+    </div>
+  </div>
+
+  <!-- ── METRICS ── -->
+  <div id="metrics">
+    <div class="sec-header">
+      <div class="sec-title">Kết Quả Đánh Giá Mô Hình</div>
+      <div style="font-size:.72rem;color:var(--text-muted);">XGBoost · 16 features · Train/Test 80/20</div>
+    </div>
+    <div class="metrics-grid">
+      <div class="metric-card fade-in" style="--card-accent:linear-gradient(90deg,#00d4ff,#b06aff);--val-gradient:linear-gradient(135deg,#00d4ff,#fff)">
+        <div class="metric-label">Accuracy</div>
+        <div class="metric-value" id="v-acc">—</div>
+        <div class="metric-sub">Tỷ lệ dự đoán đúng tổng thể</div>
+      </div>
+      <div class="metric-card fade-in" style="--card-accent:linear-gradient(90deg,#00e87a,#00d4ff);--val-gradient:linear-gradient(135deg,#00e87a,#fff)">
+        <div class="metric-label">Precision</div>
+        <div class="metric-value" id="v-prec">—</div>
+        <div class="metric-sub">Độ chính xác khi dự đoán dương</div>
+      </div>
+      <div class="metric-card fade-in" style="--card-accent:linear-gradient(90deg,#ffc94a,#ff7c3a);--val-gradient:linear-gradient(135deg,#ffc94a,#fff)">
+        <div class="metric-label">Recall</div>
+        <div class="metric-value" id="v-recall">—</div>
+        <div class="metric-sub">Tỷ lệ phát hiện đúng dương</div>
+      </div>
+      <div class="metric-card fade-in" style="--card-accent:linear-gradient(90deg,#b06aff,#ff4d6d);--val-gradient:linear-gradient(135deg,#b06aff,#fff)">
+        <div class="metric-label">F1-Score</div>
+        <div class="metric-value" id="v-f1">—</div>
+        <div class="metric-sub">Trung bình điều hòa P & R</div>
+      </div>
+      <div class="metric-card fade-in" style="--card-accent:linear-gradient(90deg,#ff7c3a,#ffc94a);--val-gradient:linear-gradient(135deg,#ff7c3a,#fff)">
+        <div class="metric-label">AUC-ROC</div>
+        <div class="metric-value" id="v-auc">—</div>
+        <div class="metric-sub">Diện tích dưới đường ROC</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CHARTS ── -->
+  <div id="charts">
+    <div class="sec-header" style="margin-bottom:1rem">
+      <div class="sec-title">Phân Tích Trực Quan</div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">📉 Learning Curves (Log Loss)</div>
+        <div class="chart-wrap"><canvas id="chartLC"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">🎯 Radar Hiệu Suất Mô Hình</div>
+        <div class="chart-wrap"><canvas id="chartRadar"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FEATURE IMPORTANCE ── -->
+  <div id="features">
+    <div class="sec-header" style="margin-bottom:1rem">
+      <div class="sec-title">Tầm Quan Trọng Đặc Trưng</div>
+    </div>
+    <div class="feature-card">
+      <div class="chart-title">🔑 Feature Importance (XGBoost gain)</div>
+      <div class="feature-list" id="feat-list"></div>
+    </div>
+  </div>
+
+  <!-- ── CONFUSION + REPORT ── -->
+  <div class="bottom-grid">
+    <div class="chart-card">
+      <div class="chart-title">🟩 Confusion Matrix</div>
+      <div class="cm-grid">
+        <div></div>
+        <div class="cm-axis" style="font-weight:600;color:var(--text-secondary);">Pred: Giảm</div>
+        <div class="cm-axis" style="font-weight:600;color:var(--text-secondary);">Pred: Tăng</div>
+        <div class="cm-axis">Thực: Giảm</div>
+        <div class="cm-cell cm-tn" id="c-tn"><span class="cm-num">—</span><div class="cm-lbl">True Negative</div></div>
+        <div class="cm-cell cm-fp" id="c-fp"><span class="cm-num">—</span><div class="cm-lbl">False Positive</div></div>
+        <div class="cm-axis">Thực: Tăng</div>
+        <div class="cm-cell cm-fn" id="c-fn"><span class="cm-num">—</span><div class="cm-lbl">False Negative</div></div>
+        <div class="cm-cell cm-tp" id="c-tp"><span class="cm-num">—</span><div class="cm-lbl">True Positive</div></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📊 Classification Report</div>
+      <table class="report-table">
+        <thead><tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1</th><th>Support</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="tag-down">↓ Giảm</span></td>
+            <td id="rp0">—</td><td id="rr0">—</td><td id="rf0">—</td><td id="rs0">—</td>
+          </tr>
+          <tr>
+            <td><span class="tag-up">↑ Tăng</span></td>
+            <td id="rp1">—</td><td id="rr1">—</td><td id="rf1">—</td><td id="rs1">—</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:1.5rem">
+        <div class="chart-title" style="margin-bottom:.6rem">⚙️ Thông Số Model & Dataset</div>
+        <div class="info-grid">
+          <div class="info-item"><div class="info-lbl">Tổng mẫu</div><div class="info-val" id="i-total">—</div></div>
+          <div class="info-item"><div class="info-lbl">Train / Test</div><div class="info-val" id="i-split">—</div></div>
+          <div class="info-item"><div class="info-lbl">Số features</div><div class="info-val" id="i-feat">—</div></div>
+          <div class="info-item"><div class="info-lbl">n_estimators</div><div class="info-val" id="i-nest">—</div></div>
+          <div class="info-item"><div class="info-lbl">max_depth</div><div class="info-val" id="i-dep">—</div></div>
+          <div class="info-item"><div class="info-lbl">learning_rate</div><div class="info-val" id="i-lr">—</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       ──  TICKER SELECTOR + PREDICT SECTION  ──
+  ══════════════════════════════════════════════ -->
+  <div id="predict">
+    <div class="sec-header" style="margin-bottom:1rem">
+      <div class="sec-title">Chọn Mã Cổ Phiếu & Dự Đoán</div>
+    </div>
+    <div class="predict-section">
+      <!-- Tabs -->
+      <div class="predict-tabs">
+        <button class="ptab active" id="tab-ticker" onclick="switchTab('ticker')">🏦 Chọn Mã Cổ Phiếu</button>
+        <button class="ptab"        id="tab-top10"  onclick="switchTab('top10')">🏆 Top 10 Tín Hiệu</button>
+        <button class="ptab"        id="tab-portfolio" onclick="switchTab('portfolio')">💼 Tối Ưu Danh Mục</button>
+        <button class="ptab"        id="tab-predict" onclick="switchTab('predict')">⚡ Dự Đoán</button>
+      </div>
+
+      <div class="predict-panels">
+
+        <!-- ── TAB 1: TICKER BROWSER ── -->
+        <div class="ppanel active" id="panel-ticker">
+          <div class="ticker-search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="ticker-search"
+              class="ticker-search-input"
+              placeholder="Tìm kiếm mã cổ phiếu (VD: FPT, VNM, HPG...)"
+              oninput="filterTickers(this.value)"/>
+          </div>
+
+          <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:.7rem">
+            <span id="ticker-count-label">Đang tải...</span>
+          </div>
+
+          <div class="ticker-grid" id="ticker-grid">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Ticker detail panel -->
+          <div class="ticker-detail" id="ticker-detail">
+            <div class="ticker-detail-header">
+              <div>
+                <div class="ticker-name-large" id="td-name">—</div>
+                <div style="font-size:.72rem;color:var(--text-secondary);margin-top:4px">
+                  Số lượng dữ liệu: <span id="td-samples">—</span> phiên
+                </div>
+                <div style="font-size:.72rem;color:var(--accent-cyan);margin-top:3px;font-weight:500;">
+                  📅 Ngày dữ liệu hiện tại (T): <strong id="td-latest-date">—</strong>
+                </div>
+                <div style="font-size:.72rem;color:var(--accent-yellow);margin-top:3px;font-weight:500;">
+                  🔮 Ngày dự báo mục tiêu (T+5): <strong id="td-predict-date">—</strong>
+                </div>
+              </div>
+              <canvas class="ticker-donut-wrap" id="td-donut" width="70" height="70"></canvas>
+            </div>
+            <div class="ticker-stats-row">
+              <div class="tstat">
+                <div class="tstat-lbl">Xác suất Tăng (AI)</div>
+                <div class="tstat-val" id="td-up" style="color:var(--accent-green)">—</div>
+              </div>
+              <div class="tstat">
+                <div class="tstat-lbl">Xác suất Giảm (AI)</div>
+                <div class="tstat-val" id="td-down" style="color:var(--accent-red)">—</div>
+              </div>
+              <div class="tstat">
+                <div class="tstat-lbl">Tín hiệu dự báo</div>
+                <div class="tstat-val" id="td-up-n" style="color:var(--accent-green)">—</div>
+              </div>
+              <div class="tstat">
+                <div class="tstat-lbl">Độ tin cậy</div>
+                <div class="tstat-val" id="td-down-n" style="color:#fff">—</div>
+              </div>
+            </div>
+            <div style="margin-top:1rem;display:flex;gap:10px">
+              <button class="btn-predict" onclick="switchTab('predict')" style="padding:9px 20px;font-size:.82rem">
+                🛠️ Tùy chỉnh thông số (What-if)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB 1.5: TOP 10 SIGNALS ── -->
+        <div class="ppanel" id="panel-top10">
+          <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:1.5rem;line-height:1.45;background:rgba(255,255,255,0.02);padding:0.9rem 1.2rem;border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+            <div>
+              💡 Hệ thống tự động phân loại và xếp hạng Top 10 mã cổ phiếu nổi bật nhất theo từng nhóm tiêu chí. 
+              <br/>Nhấp vào bất kỳ dòng nào để hiển thị phân tích SHAP chi tiết của mã đó.
+            </div>
+            <div id="top10-stats-summary" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--accent-cyan);">
+              Tỷ lệ AI khuyên Mua: <strong id="top10-bull-ratio" style="color:var(--accent-green)">—</strong>
+            </div>
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;" id="top10-grid-container">
+            <!-- 1. TOP 10 TĂNG (AI) -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-top:3px solid var(--accent-green);border-radius:var(--radius-sm);padding:1.2rem;">
+              <div style="font-size:0.88rem;font-weight:700;color:var(--accent-green);margin-bottom:1rem;display:flex;align-items:center;gap:6px;">
+                🟢 Top 10 Xác Suất TĂNG (AI)
+              </div>
+              <table class="report-table" style="margin-top:0;">
+                <thead>
+                  <tr>
+                    <th style="text-align:left;padding-left:5px;width:40%;">Mã</th>
+                    <th>Xác suất Tăng</th>
+                    <th style="width:25%;">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody id="top10-up-list">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 2. TOP 10 GIẢM (AI) -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-top:3px solid var(--accent-red);border-radius:var(--radius-sm);padding:1.2rem;">
+              <div style="font-size:0.88rem;font-weight:700;color:var(--accent-red);margin-bottom:1rem;display:flex;align-items:center;gap:6px;">
+                🔴 Top 10 Xác Suất GIẢM (AI)
+              </div>
+              <table class="report-table" style="margin-top:0;">
+                <thead>
+                  <tr>
+                    <th style="text-align:left;padding-left:5px;width:40%;">Mã</th>
+                    <th>Xác suất Giảm</th>
+                    <th style="width:25%;">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody id="top10-down-list">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 3. TOP 10 ĐỘT BIẾN KHỐI LƯỢNG (DÒNG TIỀN) -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-top:3px solid var(--accent-cyan);border-radius:var(--radius-sm);padding:1.2rem;">
+              <div style="font-size:0.88rem;font-weight:700;color:var(--accent-cyan);margin-bottom:1rem;display:flex;align-items:center;gap:6px;">
+                ⚡ Top 10 Đột Biến Khối Lượng
+              </div>
+              <table class="report-table" style="margin-top:0;">
+                <thead>
+                  <tr>
+                    <th style="text-align:left;padding-left:5px;width:40%;">Mã</th>
+                    <th>Gấp trung bình 20p</th>
+                    <th style="width:25%;">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody id="top10-volume-list">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 4. TOP 10 QUÁ BÁN (PCA OSCILLATORS) -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-top:3px solid var(--accent-orange);border-radius:var(--radius-sm);padding:1.2rem;">
+              <div style="font-size:0.88rem;font-weight:700;color:var(--accent-orange);margin-bottom:1rem;display:flex;align-items:center;gap:6px;">
+                📉 Top 10 Chỉ Báo Quá Bán (PCA)
+              </div>
+              <table class="report-table" style="margin-top:0;">
+                <thead>
+                  <tr>
+                    <th style="text-align:left;padding-left:5px;width:40%;">Mã</th>
+                    <th>Chỉ số dao động</th>
+                    <th style="width:25%;">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody id="top10-oversold-list">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB 1.7: MARKOWITZ PORTFOLIO OPTIMIZATION ── -->
+        <div class="ppanel" id="panel-portfolio">
+          <div style="display:grid;grid-template-columns:350px 1fr;gap:1.5rem;" id="portfolio-grid-container">
+            
+            <!-- LEFT COLUMN: INPUTS -->
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.2rem;display:flex;flex-direction:column;gap:1.2rem;height:fit-content;">
+              <div style="font-size:0.88rem;font-weight:700;color:var(--accent-cyan);display:flex;align-items:center;gap:6px;">
+                💵 Tham Số Danh Mục
+              </div>
+              
+              <!-- Capital input -->
+              <div class="field-grp">
+                <label for="portfolio-capital">Nhập Số Vốn Khả Dụng (VND)</label>
+                <input type="number" id="portfolio-capital" value="100000000" min="1000000" step="1000000" style="padding:8px 12px;font-size:0.9rem;font-weight:600;"/>
+              </div>
+
+              <!-- Appetite Selector -->
+              <div>
+                <label style="font-size:0.62rem;font-family:'JetBrains Mono',monospace;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:block;">Khẩu vị rủi ro / Mục tiêu</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                  <button type="button" class="nav-pill" id="appetite-safe" onclick="setAppetite('safe')" style="padding:6px;border-radius:var(--radius-xs);text-align:center;font-size:0.7rem;font-weight:600;">🛡️ An toàn</button>
+                  <button type="button" class="nav-pill active" id="appetite-balanced" onclick="setAppetite('balanced')" style="padding:6px;border-radius:var(--radius-xs);text-align:center;font-size:0.7rem;font-weight:600;">⚖️ Cân bằng</button>
+                  <button type="button" class="nav-pill" id="appetite-growth" onclick="setAppetite('growth')" style="padding:6px;border-radius:var(--radius-xs);text-align:center;font-size:0.7rem;font-weight:600;">🚀 Tăng trưởng</button>
+                  <button type="button" class="nav-pill" id="appetite-custom" onclick="setAppetite('custom')" style="padding:6px;border-radius:var(--radius-xs);text-align:center;font-size:0.7rem;font-weight:600;">⚙️ Tùy chỉnh</button>
+                </div>
+              </div>
+
+              <!-- Target Return Slider (shown only for custom) -->
+              <div id="portfolio-custom-return-wrap" style="display:none;" class="field-grp">
+                <div style="display:flex;justify-content:between;align-items:center;">
+                  <label for="portfolio-target-return">Lợi nhuận kỳ vọng tối thiểu</label>
+                  <span id="portfolio-target-return-val" style="color:var(--accent-cyan);font-family:'JetBrains Mono',monospace;font-size:0.75rem;font-weight:600;margin-left:auto;">15%</span>
+                </div>
+                <input type="range" id="portfolio-target-return" min="5" max="40" value="15" step="1" oninput="document.getElementById('portfolio-target-return-val').textContent = this.value + '%'"/>
+              </div>
+
+              <!-- Ticker Checkbox grid -->
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <label style="font-size:0.62rem;font-family:'JetBrains Mono',monospace;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Chọn cổ phiếu tối ưu</label>
+                  <span id="portfolio-selected-count" style="font-size:0.65rem;color:var(--text-secondary);font-weight:500;">Đã chọn: 0</span>
+                </div>
+                
+                <!-- Quick controls -->
+                <div style="display:flex;gap:4px;margin-bottom:6px;">
+                  <button type="button" class="nav-pill" onclick="selectDefaultPortfolioTickers()" style="padding:2px 8px;font-size:0.6rem;">Chọn 6 mã lớn</button>
+                  <button type="button" class="nav-pill" onclick="selectAllPortfolioTickers(true)" style="padding:2px 8px;font-size:0.6rem;">Chọn hết</button>
+                  <button type="button" class="nav-pill" onclick="selectAllPortfolioTickers(false)" style="padding:2px 8px;font-size:0.6rem;">Bỏ hết</button>
+                </div>
+
+                <div id="portfolio-ticker-selects" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;max-height:180px;overflow-y:auto;border:1px solid var(--border);padding:6px;border-radius:var(--radius-xs);background:rgba(0,0,0,0.15);">
+                  <!-- Dynamic JS -->
+                </div>
+              </div>
+
+              <!-- Run Button -->
+              <button class="btn-predict" id="btn-run-portfolio" onclick="runPortfolioOptimization()" style="width:100%;justify-content:center;">
+                ⚡ Thiết Kế Danh Mục Tối Ưu
+              </button>
+            </div>
+
+            <!-- RIGHT COLUMN: RESULTS -->
+            <div style="display:flex;flex-direction:column;gap:1.5rem;">
+              
+              <!-- Placeholder screen -->
+              <div id="portfolio-placeholder" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4rem 2rem;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;">
+                <div style="font-size:3rem;">💼</div>
+                <h3 style="color:var(--text-primary);font-size:1.1rem;font-weight:600;">Chưa Có Danh Mục Được Thiết Kế</h3>
+                <p style="color:var(--text-secondary);font-size:0.8rem;max-width:380px;line-height:1.45;">
+                  Vui lòng cấu hình các tham số vốn, khẩu vị rủi ro và danh sách cổ phiếu ở cột bên trái, sau đó nhấn nút <strong>Thiết Kế Danh Mục Tối Ưu</strong>.
+                </p>
+              </div>
+
+              <!-- Real result screen (hidden by default) -->
+              <div id="portfolio-results-wrap" style="display:none;flex-direction:column;gap:1.5rem;">
+                
+                <!-- Summary KPI Row -->
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                  <div style="background:var(--bg-card);border:1px solid var(--border);border-top:3px solid var(--accent-green);border-radius:var(--radius-sm);padding:0.9rem 1.1rem;">
+                    <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Tỷ Suất Sinh Lời Kỳ Vọng</div>
+                    <div style="font-size:1.5rem;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent-green);" id="p-expected-return">—</div>
+                    <div style="font-size:0.62rem;color:var(--text-muted);margin-top:2px;">(đã điều chỉnh theo AI)</div>
+                  </div>
+                  <div style="background:var(--bg-card);border:1px solid var(--border);border-top:3px solid var(--accent-orange);border-radius:var(--radius-sm);padding:0.9rem 1.1rem;">
+                    <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Rủi Ro Danh Mục (Volatility)</div>
+                    <div style="font-size:1.5rem;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent-orange);" id="p-volatility">—</div>
+                    <div style="font-size:0.62rem;color:var(--text-muted);margin-top:2px;">(độ lệch chuẩn dao động)</div>
+                  </div>
+                  <div style="background:var(--bg-card);border:1px solid var(--border);border-top:3px solid var(--accent-cyan);border-radius:var(--radius-sm);padding:0.9rem 1.1rem;">
+                    <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Chỉ Số Sharpe Ratio</div>
+                    <div style="font-size:1.5rem;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent-cyan);" id="p-sharpe">—</div>
+                    <div style="font-size:0.62rem;color:var(--text-muted);margin-top:2px;">(hiệu quả sử dụng rủi ro)</div>
+                  </div>
+                </div>
+
+                <!-- Text narrative explanation card -->
+                <div style="background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.2);border-radius:var(--radius-sm);padding:1rem 1.2rem;line-height:1.5;font-size:0.78rem;color:var(--text-primary);" id="portfolio-narrative-box">
+                  <!-- Narrative will be written by JS -->
+                </div>
+
+                <!-- Allocation Table -->
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.2rem;">
+                  <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);margin-bottom:0.8rem;display:flex;align-items:center;gap:6px;">
+                    📊 Chi Tiết Phân Bổ Nguồn Vốn (Làm Tròn Lô 100 HOSE)
+                  </div>
+                  <table class="report-table" style="margin-top:0;font-size:0.78rem;">
+                    <thead>
+                      <tr>
+                        <th style="text-align:left;padding-left:8px;">Cổ Phiếu</th>
+                        <th>Giá Hiện Tại</th>
+                        <th>Tỷ Trọng Đề Xuất</th>
+                        <th>Tỷ Trọng Thực Tế</th>
+                        <th>Khuyến Nghị Mua (cp)</th>
+                        <th style="text-align:right;padding-right:8px;">Số Tiền Phân Bổ</th>
+                      </tr>
+                    </thead>
+                    <tbody id="portfolio-allocation-table-body">
+                      <!-- Populated by JS -->
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Visual Charts Section (Side-by-side or stacked) -->
+                <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:1.5rem;" id="portfolio-charts-container">
+                  <!-- Doughnut Weight Chart -->
+                  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.2rem;">
+                    <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);margin-bottom:0.8rem;">
+                      🍩 Tỷ Lệ Phân Bổ Vốn
+                    </div>
+                    <div style="position:relative;height:240px;display:flex;justify-content:center;align-items:center;">
+                      <canvas id="chartPortfolioPie"></canvas>
+                    </div>
+                  </div>
+
+                  <!-- Efficient Frontier Chart -->
+                  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.2rem;">
+                    <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);margin-bottom:0.8rem;">
+                      📈 Đường Biên Hiệu Quả (Efficient Frontier)
+                    </div>
+                    <div style="position:relative;height:240px;">
+                      <canvas id="chartPortfolioFrontier"></canvas>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Detailed SHAP logic explanations for holdings -->
+                <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.2rem;">
+                  <div style="font-size:0.82rem;font-weight:700;color:var(--text-primary);margin-bottom:0.8rem;display:flex;align-items:center;gap:6px;">
+                    🤖 Giải Thích Trọng Số Phân Bổ Bằng SHAP AI
+                  </div>
+                  <div id="portfolio-shap-explanations-list" style="display:flex;flex-direction:column;gap:8px;">
+                    <!-- JS populated -->
+                  </div>
+                </div>
+
+              </div><!-- /results-wrap -->
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB 2: PREDICT FORM ── -->
+        <div class="ppanel" id="panel-predict">
+          <p class="predict-intro" id="predict-intro-text">
+            Nhập các giá trị đặc trưng kỹ thuật để dự đoán xu hướng giá.
+          </p>
+          <div class="predict-fields" id="predict-fields"></div>
+          <div class="predict-actions">
+            <button class="btn-predict" id="btn-predict" onclick="runPredict()">
+              <span>⚡</span> Dự Đoán Ngay
+            </button>
+            <button class="btn-reset" onclick="resetFields()">↺ Reset</button>
+          </div>
+        </div>
+
+      </div><!-- /predict-panels -->
+
+      <!-- Prediction Result Footer (Common for both select and manual predict) -->
+      <div class="predict-result" id="predict-result" style="display: none; padding: 1.5rem; background: rgba(8,12,22,0.4); border-top: 1px solid var(--border);">
+        <div class="result-label" id="result-label"></div>
+        <div class="proba-bars" id="proba-bars"></div>
+        
+        <!-- SHAP attribution explanation -->
+        <div id="shap-explanation-wrap" style="margin-top: 1.5rem; padding-top: 1.2rem; border-top: 1px solid rgba(255,255,255,0.08); display: none;">
+          <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.6rem; display: flex; align-items: center; gap: 6px;">
+            🔍 Giải Thích Quyết Định Bằng SHAP
+          </div>
+          <div style="font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.4;">
+            Dưới đây là các đặc trưng kỹ thuật đóng vai trò lớn nhất đến dự đoán của mô hình XGBoost. Trực quan hóa giá trị SHAP (Feature Contributions): màu xanh lá tăng khả năng dự báo giá **Tăng**, màu đỏ tăng khả năng dự báo giá **Giảm**.
+          </div>
+          
+          <!-- Textual Explanation Narrative -->
+          <div id="shap-text-explanation" style="margin-bottom: 1.2rem; padding: 1rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius-sm); line-height: 1.5; font-size: 0.76rem; color: var(--text-primary);">
+            <!-- Narrative text will be populated dynamically -->
+          </div>
+
+          <!-- Bar Chart Representation -->
+          <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.6rem;">
+            📊 Biểu đồ đóng góp chi tiết (SHAP values):
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;" id="shap-list">
+            <!-- SHAP bars will go here -->
+          </div>
+        </div>
+      </div>
+    </div><!-- /predict-section -->
+  </div>
+
+{% else %}
+  <div style="text-align:center;padding:6rem 2rem">
+    <div style="font-size:3.5rem;margin-bottom:1rem">⚙️</div>
+    <h2 style="color:var(--accent-yellow);margin-bottom:.5rem">Model chưa được training</h2>
+    <p style="color:var(--text-secondary)">Hãy chạy <code style="color:var(--accent-cyan)">python train_model.py</code> trước.</p>
+  </div>
+{% endif %}
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let globalMetrics   = null;
+let allTickers      = [];
+let selectedTicker  = null;
+let donutChart      = null;
+let defaultFeatureVals = {};
+
+// ═══════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════
+async function boot() {
+  const [mRes, tRes] = await Promise.all([
+    fetch('/api/metrics'),
+    fetch('/api/tickers')
+  ]);
+  globalMetrics = await mRes.json();
+  allTickers    = await tRes.json();
+
+  renderMetrics(globalMetrics);
+  renderCharts(globalMetrics);
+  renderFeatureImportance(globalMetrics);
+  renderConfusionMatrix(globalMetrics);
+  renderClassReport(globalMetrics);
+  renderModelInfo(globalMetrics);
+  renderPredictFields(globalMetrics);
+  renderTickerGrid(allTickers);
+  renderPortfolioTickerSelectors();
+
+  // Hiển thị thông tin ngày dữ liệu/dự báo tổng thể trên Header
+  if (allTickers.length > 0) {
+    const dates = allTickers.map(t => t.latest_date).filter(Boolean);
+    const predictDates = allTickers.map(t => t.predict_date).filter(Boolean);
+    if (dates.length > 0) {
+      const maxDate = dates.reduce((a, b) => a > b ? a : b);
+      const maxPredict = predictDates.reduce((a, b) => a > b ? a : b);
+      
+      const headerRight = document.querySelector('.header-right');
+      if (headerRight) {
+        const dateBadge = document.createElement('div');
+        dateBadge.className = 'status-badge';
+        dateBadge.style.background = 'rgba(0, 212, 255, 0.1)';
+        dateBadge.style.borderColor = 'rgba(0, 212, 255, 0.3)';
+        dateBadge.style.color = 'var(--accent-cyan)';
+        dateBadge.innerHTML = `📅 T: ${maxDate} → T+5: ${maxPredict}`;
+        headerRight.insertBefore(dateBadge, headerRight.firstChild);
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════
+function fmt(n) { return parseInt(n).toLocaleString('vi-VN'); }
+function pct(v) { return (v * 100).toFixed(2) + '%'; }
+
+function animateCount(id, target, suffix, decimals) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const dur = 1100, t0 = performance.now();
+  const go = now => {
+    const p = Math.min((now - t0) / dur, 1);
+    const e = 1 - Math.pow(1 - p, 3);
+    el.textContent = (target * e).toFixed(decimals) + suffix;
+    if (p < 1) requestAnimationFrame(go);
+  };
+  requestAnimationFrame(go);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  METRICS
+// ═══════════════════════════════════════════════════════════
+function renderMetrics(m) {
+  animateCount('v-acc',   m.accuracy  * 100, '%', 2);
+  animateCount('v-prec',  m.precision * 100, '%', 2);
+  animateCount('v-recall',m.recall    * 100, '%', 2);
+  animateCount('v-f1',    m.f1_score  * 100, '%', 2);
+  animateCount('v-auc',   m.auc_roc,         '',  4);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════════════════════
+function renderCharts(m) {
+  // Learning curve
+  const lc = m.learning_curves;
+  new Chart(document.getElementById('chartLC').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: lc.epochs.map(e => `E${e}`),
+      datasets: [
+        { label:'Train Loss',      data:lc.train_logloss, borderColor:'#00d4ff', backgroundColor:'rgba(0,212,255,.07)', borderWidth:2, pointRadius:1.5, fill:true, tension:.4 },
+        { label:'Validation Loss', data:lc.val_logloss,   borderColor:'#b06aff', backgroundColor:'rgba(176,106,255,.07)', borderWidth:2, pointRadius:1.5, fill:true, tension:.4 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#7a9cc0', font:{size:11} } } },
+      scales:{
+        x:{ ticks:{ color:'#3d5470', maxTicksLimit:10, font:{size:10} }, grid:{ color:'rgba(255,255,255,.04)' } },
+        y:{ ticks:{ color:'#3d5470', font:{size:10} }, grid:{ color:'rgba(255,255,255,.04)' } }
+      }
+    }
+  });
+
+  // Radar
+  new Chart(document.getElementById('chartRadar').getContext('2d'), {
+    type: 'radar',
+    data: {
+      labels: ['Accuracy','Precision','Recall','F1-Score','AUC×100'],
+      datasets: [{
+        label:'XGBoost',
+        data: [m.accuracy*100, m.precision*100, m.recall*100, m.f1_score*100, m.auc_roc*100],
+        borderColor:'#00d4ff', backgroundColor:'rgba(0,212,255,.13)',
+        borderWidth:2, pointBackgroundColor:'#00d4ff', pointRadius:4
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ r:{
+        min:40, max:100,
+        ticks:{ color:'#3d5470', font:{size:9}, backdropColor:'transparent' },
+        grid:{ color:'rgba(255,255,255,.06)' },
+        pointLabels:{ color:'#7a9cc0', font:{size:10} },
+        angleLines:{ color:'rgba(255,255,255,.06)' }
+      }}
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  FEATURE IMPORTANCE
+// ═══════════════════════════════════════════════════════════
+function renderFeatureImportance(m) {
+  const container = document.getElementById('feat-list');
+  const feats = m.feature_importance.slice(0, 12);
+  const maxI = feats[0].importance;
+  container.innerHTML = feats.map((f, i) => `
+    <div class="feature-item">
+      <div class="feature-name" title="${f.feature}">${i+1}. ${f.feature}</div>
+      <div class="f-bar-bg"><div class="f-bar-fill" style="width:0" data-w="${(f.importance/maxI*100).toFixed(1)}%"></div></div>
+      <div class="f-pct">${(f.importance*100).toFixed(2)}%</div>
+    </div>`).join('');
+  setTimeout(() => {
+    document.querySelectorAll('.f-bar-fill').forEach(el => el.style.width = el.dataset.w);
+  }, 200);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CONFUSION MATRIX
+// ═══════════════════════════════════════════════════════════
+function renderConfusionMatrix(m) {
+  const cm = m.confusion_matrix;
+  document.getElementById('c-tn').querySelector('.cm-num').textContent = fmt(cm[0][0]);
+  document.getElementById('c-fp').querySelector('.cm-num').textContent = fmt(cm[0][1]);
+  document.getElementById('c-fn').querySelector('.cm-num').textContent = fmt(cm[1][0]);
+  document.getElementById('c-tp').querySelector('.cm-num').textContent = fmt(cm[1][1]);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CLASS REPORT
+// ═══════════════════════════════════════════════════════════
+function renderClassReport(m) {
+  const r = m.classification_report;
+  document.getElementById('rp0').textContent = pct(r.class_0.precision);
+  document.getElementById('rr0').textContent = pct(r.class_0.recall);
+  document.getElementById('rf0').textContent = pct(r.class_0.f1_score);
+  document.getElementById('rs0').textContent = fmt(r.class_0.support);
+  document.getElementById('rp1').textContent = pct(r.class_1.precision);
+  document.getElementById('rr1').textContent = pct(r.class_1.recall);
+  document.getElementById('rf1').textContent = pct(r.class_1.f1_score);
+  document.getElementById('rs1').textContent = fmt(r.class_1.support);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MODEL INFO
+// ═══════════════════════════════════════════════════════════
+function renderModelInfo(m) {
+  document.getElementById('i-total').textContent = fmt(m.total_samples);
+  document.getElementById('i-split').textContent = `${fmt(m.train_samples)} / ${fmt(m.test_samples)}`;
+  document.getElementById('i-feat').textContent  = m.n_features;
+  document.getElementById('i-nest').textContent  = m.model_params.n_estimators;
+  document.getElementById('i-dep').textContent   = m.model_params.max_depth;
+  document.getElementById('i-lr').textContent    = m.model_params.learning_rate;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PREDICT FIELDS
+// ═══════════════════════════════════════════════════════════
+function renderPredictFields(m) {
+  const container = document.getElementById('predict-fields');
+  const fields = m.feature_cols || [];
+  defaultFeatureVals = {};
+  container.innerHTML = fields.map(f => {
+    defaultFeatureVals[f] = 0;
+    return `
+    <div class="field-grp">
+      <label for="inp-${f}">${f}</label>
+      <input type="number" step="any" id="inp-${f}" name="${f}" value="0" placeholder="0.0"/>
+    </div>`;
+  }).join('');
+}
+
+function setFieldValues(vals) {
+  if (!vals) return;
+  Object.entries(vals).forEach(([k, v]) => {
+    const el = document.getElementById('inp-' + k);
+    if (el) el.value = typeof v === 'number' ? v.toFixed(6) : v;
+  });
+}
+
+function resetFields() {
+  const fields = globalMetrics?.feature_cols || [];
+  fields.forEach(f => {
+    const el = document.getElementById('inp-' + f);
+    if (el) el.value = 0;
+  });
+  document.getElementById('predict-result').style.display = 'none';
+  document.getElementById('predict-intro-text').textContent = 'Nhập các giá trị đặc trưng kỹ thuật để dự đoán xu hướng giá.';
+  selectedTicker = null;
+  document.querySelectorAll('.ticker-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('ticker-detail').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TICKER GRID
+// ═══════════════════════════════════════════════════════════
+function renderTickerGrid(tickers) {
+  const grid = document.getElementById('ticker-grid');
+  document.getElementById('ticker-count-label').textContent = `${tickers.length} mã cổ phiếu đã được AI dự báo xu hướng`;
+  grid.innerHTML = tickers.map(t => {
+    const isUp = t.prediction === 1;
+    const trendClass = isUp ? 'up-trend' : 'down-trend';
+    const pctText = isUp ? `${(t.probability_up * 100).toFixed(1)}% ↑` : `${(t.probability_down * 100).toFixed(1)}% ↓`;
+    return `
+      <button class="ticker-btn ${trendClass}" id="tbtn-${t.ticker}"
+        onclick="selectTicker('${t.ticker}')">
+        ${t.ticker}
+        <span class="ticker-count-badge">${pctText}</span>
+      </button>`;
+  }).join('');
+}
+
+function filterTickers(query) {
+  const q = query.trim().toUpperCase();
+  const filtered = q ? allTickers.filter(t => t.ticker.includes(q)) : allTickers;
+  renderTickerGrid(filtered);
+  document.getElementById('ticker-count-label').textContent =
+    q ? `Tìm thấy ${filtered.length} mã` : `${allTickers.length} mã cổ phiếu đã được AI dự báo xu hướng`;
+  // Re-select if still visible
+  if (selectedTicker) {
+    const btn = document.getElementById('tbtn-' + selectedTicker);
+    if (btn) btn.classList.add('selected');
+  }
+}
+
+async function selectTicker(ticker) {
+  // Toggle
+  if (selectedTicker === ticker) {
+    selectedTicker = null;
+    document.querySelectorAll('.ticker-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('ticker-detail').classList.remove('show');
+    document.getElementById('predict-result').style.display = 'none';
+    return;
+  }
+
+  // Deselect old
+  document.querySelectorAll('.ticker-btn').forEach(b => b.classList.remove('selected'));
+  const btn = document.getElementById('tbtn-' + ticker);
+  if (btn) btn.classList.add('selected');
+
+  selectedTicker = ticker;
+
+  // Load detail (which now includes dynamic predictions & SHAP values)
+  const res  = await fetch('/api/ticker/' + ticker);
+  const data = await res.json();
+  showTickerDetail(data);
+  
+  // Auto-populate inputs for What-if simulation
+  if (data.median_features) {
+    setFieldValues(data.median_features);
+    document.getElementById('predict-intro-text').textContent =
+      `Đang hiển thị dự báo mã ${selectedTicker} bằng các giá trị trung vị. Bạn có thể chỉnh sửa thủ công dưới đây.`;
+  }
+  
+  // Show SHAP explanations instantly
+  showResult(data);
+}
+
+function showTickerDetail(data) {
+  document.getElementById('td-name').textContent    = data.ticker;
+  document.getElementById('td-samples').textContent = fmt(data.total_samples);
+  document.getElementById('td-latest-date').textContent = data.latest_date || 'N/A';
+  document.getElementById('td-predict-date').textContent = data.predict_date || 'N/A';
+  document.getElementById('td-up').textContent      = (data.probability_up * 100).toFixed(1) + '%';
+  document.getElementById('td-down').textContent    = (data.probability_down * 100).toFixed(1) + '%';
+  
+  const isUp = data.prediction === 1;
+  const sigEl = document.getElementById('td-up-n');
+  sigEl.textContent = isUp ? 'MUA' : 'BÁN';
+  sigEl.style.color = isUp ? 'var(--accent-green)' : 'var(--accent-red)';
+  
+  document.getElementById('td-down-n').textContent  = (data.confidence * 100).toFixed(1) + '%';
+
+  // Draw mini donut
+  const canvas = document.getElementById('td-donut');
+  if (donutChart) donutChart.destroy();
+  donutChart = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [data.probability_up * 100, data.probability_down * 100],
+        backgroundColor: ['rgba(0,232,122,0.8)', 'rgba(255,77,109,0.8)'],
+        borderColor: ['rgba(0,232,122,1)', 'rgba(255,77,109,1)'],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive:false, cutout:'72%',
+      plugins:{ legend:{ display:false }, tooltip:{ enabled:false } },
+      animation:{ duration:600 }
+    }
+  });
+
+  const detail = document.getElementById('ticker-detail');
+  detail.classList.add('show');
+  detail.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════════
+function switchTab(name) {
+  ['ticker', 'top10', 'portfolio', 'predict'].forEach(t => {
+    const tabEl = document.getElementById('tab-' + t);
+    const panelEl = document.getElementById('panel-' + t);
+    if (tabEl) tabEl.classList.toggle('active', t === name);
+    if (panelEl) panelEl.classList.toggle('active', t === name);
+  });
+  if (name === 'top10') {
+    renderTop10();
+  }
+}
+
+function renderTop10() {
+  const upList = document.getElementById('top10-up-list');
+  const downList = document.getElementById('top10-down-list');
+  const volumeList = document.getElementById('top10-volume-list');
+  const oversoldList = document.getElementById('top10-oversold-list');
+  
+  if (!allTickers || allTickers.length === 0) {
+    const loadingHtml = '<tr><td colspan="3" style="color:var(--text-muted);text-align:center;padding:1rem;">Đang tải dữ liệu...</td></tr>';
+    upList.innerHTML = loadingHtml;
+    downList.innerHTML = loadingHtml;
+    volumeList.innerHTML = loadingHtml;
+    oversoldList.innerHTML = loadingHtml;
+    return;
+  }
+  
+  // Calculate AI Bullish Ratio
+  const bullCount = allTickers.filter(t => t.prediction === 1).length;
+  const bullRatio = ((bullCount / allTickers.length) * 100).toFixed(1);
+  document.getElementById('top10-bull-ratio').textContent = `${bullRatio}% (${bullCount}/${allTickers.length} mã)`;
+
+  // Sort and select Top 10 lists
+  const topUp = [...allTickers]
+    .sort((a, b) => b.probability_up - a.probability_up)
+    .slice(0, 10);
+    
+  const topDown = [...allTickers]
+    .sort((a, b) => b.probability_down - a.probability_down)
+    .slice(0, 10);
+    
+  const topVolume = [...allTickers]
+    .filter(t => t.median_features && t.median_features.volume_ratio_20 !== undefined)
+    .sort((a, b) => b.median_features.volume_ratio_20 - a.median_features.volume_ratio_20)
+    .slice(0, 10);
+    
+  const topOversold = [...allTickers]
+    .filter(t => t.median_features && t.median_features.PCA_Oscillators !== undefined)
+    .sort((a, b) => a.median_features.PCA_Oscillators - b.median_features.PCA_Oscillators)
+    .slice(0, 10);
+
+  // Render Top Up
+  upList.innerHTML = topUp.map((t, idx) => `
+    <tr style="cursor:pointer;" onclick="selectTickerAndShow('${t.ticker}')">
+      <td style="text-align:left;padding-left:5px;font-family:'JetBrains Mono',monospace;">
+        <span style="color:var(--text-muted);font-size:0.75rem;margin-right:6px;">#${idx+1}</span>
+        <strong style="color:var(--text-primary);">${t.ticker}</strong>
+      </td>
+      <td style="color:var(--accent-green);font-weight:700;">${(t.probability_up * 100).toFixed(1)}%</td>
+      <td>
+        <button class="nav-pill" style="font-size:0.65rem;padding:3px 10px;">Xem</button>
+      </td>
+    </tr>
+  `).join('');
+
+  // Render Top Down
+  downList.innerHTML = topDown.map((t, idx) => `
+    <tr style="cursor:pointer;" onclick="selectTickerAndShow('${t.ticker}')">
+      <td style="text-align:left;padding-left:5px;font-family:'JetBrains Mono',monospace;">
+        <span style="color:var(--text-muted);font-size:0.75rem;margin-right:6px;">#${idx+1}</span>
+        <strong style="color:var(--text-primary);">${t.ticker}</strong>
+      </td>
+      <td style="color:var(--accent-red);font-weight:700;">${(t.probability_down * 100).toFixed(1)}%</td>
+      <td>
+        <button class="nav-pill" style="font-size:0.65rem;padding:3px 10px;">Xem</button>
+      </td>
+    </tr>
+  `).join('');
+
+  // Render Top Volume
+  volumeList.innerHTML = topVolume.map((t, idx) => {
+    const volVal = t.median_features.volume_ratio_20;
+    return `
+      <tr style="cursor:pointer;" onclick="selectTickerAndShow('${t.ticker}')">
+        <td style="text-align:left;padding-left:5px;font-family:'JetBrains Mono',monospace;">
+          <span style="color:var(--text-muted);font-size:0.75rem;margin-right:6px;">#${idx+1}</span>
+          <strong style="color:var(--text-primary);">${t.ticker}</strong>
+        </td>
+        <td style="color:var(--accent-cyan);font-weight:700;">${volVal.toFixed(2)}x</td>
+        <td>
+          <button class="nav-pill" style="font-size:0.65rem;padding:3px 10px;">Xem</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // Render Top Oversold
+  oversoldList.innerHTML = topOversold.map((t, idx) => {
+    const oscVal = t.median_features.PCA_Oscillators;
+    return `
+      <tr style="cursor:pointer;" onclick="selectTickerAndShow('${t.ticker}')">
+        <td style="text-align:left;padding-left:5px;font-family:'JetBrains Mono',monospace;">
+          <span style="color:var(--text-muted);font-size:0.75rem;margin-right:6px;">#${idx+1}</span>
+          <strong style="color:var(--text-primary);">${t.ticker}</strong>
+        </td>
+        <td style="color:var(--accent-orange);font-weight:700;">${oscVal.toFixed(3)}</td>
+        <td>
+          <button class="nav-pill" style="font-size:0.65rem;padding:3px 10px;">Xem</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function selectTickerAndShow(ticker) {
+  switchTab('ticker');
+  const searchInput = document.getElementById('ticker-search');
+  if (searchInput && searchInput.value) {
+    searchInput.value = '';
+    filterTickers('');
+  }
+  selectTicker(ticker);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PREDICT
+// ═══════════════════════════════════════════════════════════
+async function runPredict() {
+  const btn = document.getElementById('btn-predict');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Đang xử lý...';
+
+  const fields = globalMetrics?.feature_cols || [];
+  const payload = {};
+  fields.forEach(f => {
+    const el = document.getElementById('inp-' + f);
+    payload[f] = el ? parseFloat(el.value) || 0 : 0;
+  });
+
+  try {
+    const resp   = await fetch('/api/predict', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const result = await resp.json();
+    
+    // Merge dates from the currently selected ticker if applicable, otherwise use overall latest dates
+    if (selectedTicker) {
+      const tdata = allTickers.find(t => t.ticker === selectedTicker);
+      if (tdata) {
+        result.latest_date = tdata.latest_date;
+        result.predict_date = tdata.predict_date;
+      }
+    } else if (allTickers.length > 0) {
+      const dates = allTickers.map(t => t.latest_date).filter(Boolean);
+      const predictDates = allTickers.map(t => t.predict_date).filter(Boolean);
+      if (dates.length > 0) {
+        result.latest_date = dates.reduce((a, b) => a > b ? a : b);
+        result.predict_date = predictDates.reduce((a, b) => a > b ? a : b);
+      }
+    }
+    
+    showResult(result);
+  } catch(e) {
+    alert('Lỗi: ' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>⚡</span> Dự Đoán Ngay';
+}
+
+function showResult(r) {
+  const el    = document.getElementById('predict-result');
+  const label = document.getElementById('result-label');
+  const bars  = document.getElementById('proba-bars');
+  const shapList = document.getElementById('shap-list');
+  const shapWrap = document.getElementById('shap-explanation-wrap');
+
+  el.className = 'predict-result ' + (r.prediction === 1 ? 'result-up' : 'result-down');
+  el.style.display = 'block';
+
+  const arrow = r.prediction === 1 ? '↑' : '↓';
+  const color = r.prediction === 1 ? '#00e87a' : '#ff4d6d';
+  label.innerHTML = `<span style="color:${color}">${arrow} ${r.label}</span>
+    &nbsp;·&nbsp;<span style="font-size:.88rem;color:#7a9cc0">
+    Độ tin cậy: <strong style="color:#fff">${(r.confidence*100).toFixed(1)}%</strong></span>`;
+
+  const pU = (r.probability_up   * 100).toFixed(1);
+  const pD = (r.probability_down * 100).toFixed(1);
+  bars.innerHTML = `
+    <div class="proba-row">
+      <span class="proba-lbl">↑ Tăng</span>
+      <div class="proba-track"><div class="bar-up" style="width:0" data-w="${pU}%"></div></div>
+      <span class="proba-pct">${pU}%</span>
+    </div>
+    <div class="proba-row">
+      <span class="proba-lbl">↓ Giảm</span>
+      <div class="proba-track"><div class="bar-down" style="width:0" data-w="${pD}%"></div></div>
+      <span class="proba-pct">${pD}%</span>
+    </div>`;
+
+  // Render SHAP features
+  if (r.shap_features && r.shap_features.length > 0) {
+    shapWrap.style.display = 'block';
+    
+    // Find maximum absolute SHAP value for scaling
+    const maxAbs = Math.max(...r.shap_features.map(f => Math.abs(f.shap_value)), 0.0001);
+    
+    // Take top 8 features for cleaner presentation
+    const topFeats = r.shap_features.slice(0, 8);
+    
+    // 1. Render textual explanation
+    const posImpacts = topFeats.filter(f => f.impact === 'positive');
+    const negImpacts = topFeats.filter(f => f.impact === 'negative');
+    
+    let textHtml = `<div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 5px;">🤖 Giải thích quyết định từ Mô hình AI:</div>`;
+    if (r.latest_date && r.predict_date) {
+      textHtml += `<div style="margin-bottom: 0.6rem; color: var(--text-secondary); font-size: 0.72rem;">`;
+      textHtml += `📅 Ngày dữ liệu hiện tại (T): <strong style="color: #fff">${r.latest_date}</strong> &nbsp;|&nbsp; `;
+      textHtml += `🔮 Ngày dự báo mục tiêu (T+5): <strong style="color: var(--accent-yellow)">${r.predict_date}</strong>`;
+      textHtml += `</div>`;
+    }
+    textHtml += `• Xác suất tăng giá cơ sở (mốc chuẩn): <strong style="color: #fff">${(r.p_base * 100).toFixed(2)}%</strong><br/>`;
+    textHtml += `• Xác suất tăng giá dự báo hiện tại: <strong style="color: var(--accent-cyan)">${(r.probability_up * 100).toFixed(2)}%</strong><br/><br/>`;
+    textHtml += `<strong>Các động lực chính quyết định kết quả này:</strong><br/>`;
+    
+    if (posImpacts.length > 0) {
+      textHtml += `<div style="margin-top: 5px; margin-left: 5px;"><strong>➕ Yếu tố thúc đẩy giá TĂNG:</strong><br/>`;
+      posImpacts.slice(0, 3).forEach(f => {
+        const contribPct = (f.prob_contribution * 100).toFixed(2);
+        textHtml += ` &nbsp;&nbsp;🟢 <strong>${f.label || f.feature}</strong> (giá trị: ${f.value.toFixed(4)}) đóng góp <span style="color: var(--accent-green)">+${contribPct}%</span> khả năng tăng giá.<br/>`;
+      });
+      textHtml += `</div>`;
+    }
+    
+    if (negImpacts.length > 0) {
+      textHtml += `<div style="margin-top: 8px; margin-left: 5px;"><strong>➖ Yếu tố cản trở / kéo GIẢM:</strong><br/>`;
+      negImpacts.slice(0, 3).forEach(f => {
+        const contribPct = (f.prob_contribution * 100).toFixed(2);
+        textHtml += ` &nbsp;&nbsp;🔴 <strong>${f.label || f.feature}</strong> (giá trị: ${f.value.toFixed(4)}) đóng góp <span style="color: var(--accent-red)">${contribPct}%</span> khả năng tăng giá.<br/>`;
+      });
+      textHtml += `</div>`;
+    }
+    
+    document.getElementById('shap-text-explanation').innerHTML = textHtml;
+    
+    // 2. Render bar list
+    shapList.innerHTML = topFeats.map((feat, i) => {
+      const pctVal = ((Math.abs(feat.shap_value) / maxAbs) * 100).toFixed(1);
+      const isPos = feat.impact === 'positive';
+      const featColor = isPos ? '#00e87a' : '#ff4d6d';
+      
+      return `
+        <div style="display: grid; grid-template-columns: 200px 1fr 65px; align-items: center; gap: 12px; font-size: 0.72rem; margin-bottom: 4px;">
+          <div style="color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${feat.feature} = ${feat.value}">
+            ${feat.label || feat.feature} 
+            <span style="color: var(--text-muted); font-size: 0.65rem; font-family: monospace;">(${typeof feat.value === 'number' ? feat.value.toFixed(4) : feat.value})</span>
+          </div>
+          <div style="height: 10px; background: rgba(255,255,255,0.02); border-radius: 4px; border: 1px solid rgba(255,255,255,0.04); overflow: hidden; position: relative;">
+            <div class="shap-bar-fill" style="height: 100%; width: 0; background: linear-gradient(90deg, ${featColor}20, ${featColor}); border-radius: 4px; position: absolute; left: 0; top: 0; transition: width 0.8s ease;" data-w="${pctVal}%"></div>
+          </div>
+          <div style="color: ${featColor}; text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 600;">
+            ${feat.shap_value > 0 ? '+' : ''}${feat.shap_value.toFixed(4)}
+          </div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    shapWrap.style.display = 'none';
+  }
+
+  setTimeout(() => {
+    document.querySelectorAll('.bar-up, .bar-down').forEach(b => b.style.width = b.dataset.w);
+    document.querySelectorAll('.shap-bar-fill').forEach(b => b.style.width = b.dataset.w);
+  }, 50);
+  el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+let currentAppetite = 'balanced';
+let portfolioPieChartObj = null;
+let portfolioFrontierChartObj = null;
+
+function setAppetite(val) {
+  currentAppetite = val;
+  ['safe', 'balanced', 'growth', 'custom'].forEach(v => {
+    const btn = document.getElementById('appetite-' + v);
+    if (btn) btn.classList.toggle('active', v === val);
+  });
+  
+  const customDiv = document.getElementById('portfolio-custom-return-wrap');
+  if (customDiv) {
+    customDiv.style.display = val === 'custom' ? 'block' : 'none';
+  }
+}
+
+function renderPortfolioTickerSelectors() {
+  const container = document.getElementById('portfolio-ticker-selects');
+  if (!container) return;
+  
+  const preSelected = ['FPT', 'HPG', 'VCB', 'VNM', 'SSI', 'ACB'];
+  
+  container.innerHTML = allTickers.map(t => {
+    const isChecked = preSelected.includes(t.ticker) ? 'checked' : '';
+    return `
+      <label style="display:flex;align-items:center;gap:6px;font-size:0.75rem;font-family:'JetBrains Mono',monospace;cursor:pointer;background:rgba(255,255,255,0.02);border:1px solid var(--border);padding:4px 8px;border-radius:var(--radius-xs);">
+        <input type="checkbox" name="portfolio-tickers" value="${t.ticker}" ${isChecked} style="cursor:pointer;" onchange="updatePortfolioSelectedCount()"/>
+        <span>${t.ticker}</span>
+      </label>
+    `;
+  }).join('');
+  
+  updatePortfolioSelectedCount();
+}
+
+function updatePortfolioSelectedCount() {
+  const checked = document.querySelectorAll('input[name="portfolio-tickers"]:checked');
+  document.getElementById('portfolio-selected-count').textContent = `Đã chọn: ${checked.length} mã`;
+}
+
+function selectAllPortfolioTickers(val) {
+  document.querySelectorAll('input[name="portfolio-tickers"]').forEach(cb => {
+    cb.checked = val;
+  });
+  updatePortfolioSelectedCount();
+}
+
+function selectDefaultPortfolioTickers() {
+  const defaults = ['FPT', 'HPG', 'VCB', 'VNM', 'SSI', 'ACB'];
+  document.querySelectorAll('input[name="portfolio-tickers"]').forEach(cb => {
+    cb.checked = defaults.includes(cb.value);
+  });
+  updatePortfolioSelectedCount();
+}
+
+async function runPortfolioOptimization() {
+  const btn = document.getElementById('btn-run-portfolio');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Đang tối ưu...';
+  
+  const checkboxes = document.querySelectorAll('input[name="portfolio-tickers"]:checked');
+  const selectedTickers = Array.from(checkboxes).map(cb => cb.value);
+  
+  if (selectedTickers.length < 2) {
+    alert('Vui lòng chọn ít nhất 2 mã cổ phiếu để tối ưu danh mục!');
+    btn.disabled = false;
+    btn.innerHTML = '⚡ Thiết Kế Danh Mục Tối Ưu';
+    return;
+  }
+  
+  const capital = parseFloat(document.getElementById('portfolio-capital').value) || 100000000;
+  const targetReturn = parseFloat(document.getElementById('portfolio-target-return').value) || 15;
+  
+  const payload = {
+    capital: capital,
+    risk_appetite: currentAppetite,
+    target_return: targetReturn,
+    selected_tickers: selectedTickers
+  };
+  
+  try {
+    const res = await fetch('/api/portfolio/optimize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    const result = await res.json();
+    if (result.error) {
+      alert(result.error);
+    } else {
+      showPortfolioResults(result);
+    }
+  } catch (e) {
+    alert('Có lỗi xảy ra: ' + e.message);
+  }
+  
+  btn.disabled = false;
+  btn.innerHTML = '⚡ Thiết Kế Danh Mục Tối Ưu';
+}
+
+function showPortfolioResults(data) {
+  document.getElementById('portfolio-placeholder').style.display = 'none';
+  const wrap = document.getElementById('portfolio-results-wrap');
+  wrap.style.display = 'flex';
+  
+  document.getElementById('p-expected-return').textContent = data.expected_return.toFixed(2) + '%';
+  document.getElementById('p-volatility').textContent = data.volatility.toFixed(2) + '%';
+  document.getElementById('p-sharpe').textContent = data.sharpe_ratio.toFixed(2);
+  
+  document.getElementById('portfolio-narrative-box').innerHTML = data.portfolio_narrative;
+  
+  const tableBody = document.getElementById('portfolio-allocation-table-body');
+  const sortedHoldings = [...data.holdings].sort((a, b) => b.actual_weight - a.actual_weight);
+  
+  tableBody.innerHTML = sortedHoldings.map(h => {
+    const isZero = h.quantity === 0;
+    const qtyText = isZero ? '<span style="color:var(--text-muted);">0</span>' : `<strong>${h.quantity.toLocaleString('vi-VN')}</strong>`;
+    const amtText = isZero ? '<span style="color:var(--text-muted);">0 VND</span>' : `<strong>${h.allocated_amount.toLocaleString('vi-VN')} VND</strong>`;
+    const weightColor = h.actual_weight > 0 ? 'var(--accent-cyan)' : 'var(--text-muted)';
+    
+    return `
+      <tr>
+        <td style="text-align:left;padding-left:8px;font-family:'JetBrains Mono',monospace;">
+          <strong style="color:var(--text-primary);">${h.ticker}</strong>
+        </td>
+        <td style="font-family:'JetBrains Mono',monospace;">${h.price.toLocaleString('vi-VN')} VND</td>
+        <td style="font-family:'JetBrains Mono',monospace;color:var(--text-secondary);">${h.target_weight.toFixed(1)}%</td>
+        <td style="font-family:'JetBrains Mono',monospace;color:${weightColor};font-weight:700;">${h.actual_weight.toFixed(1)}%</td>
+        <td style="font-family:'JetBrains Mono',monospace;">${qtyText}</td>
+        <td style="text-align:right;padding-right:8px;font-family:'JetBrains Mono',monospace;color:var(--text-primary);">${amtText}</td>
+      </tr>
+    `;
+  }).join('');
+  
+  tableBody.innerHTML += `
+    <tr style="background:rgba(255,255,255,0.01);border-top:1px solid rgba(255,255,255,0.08);">
+      <td style="text-align:left;padding-left:8px;color:var(--text-secondary);font-weight:600;">Tiền mặt dư thừa</td>
+      <td>—</td>
+      <td>—</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--text-muted);">${((data.cash_left / data.capital) * 100).toFixed(1)}%</td>
+      <td>—</td>
+      <td style="text-align:right;padding-right:8px;font-family:'JetBrains Mono',monospace;color:var(--text-secondary);font-weight:600;">${data.cash_left.toLocaleString('vi-VN')} VND</td>
+    </tr>
+    <tr style="background:rgba(0,212,255,0.05);border-top:2px solid var(--accent-cyan);">
+      <td style="text-align:left;padding-left:8px;color:var(--accent-cyan);font-weight:700;">Tổng cộng</td>
+      <td>—</td>
+      <td>—</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--accent-cyan);font-weight:800;">100.0%</td>
+      <td>—</td>
+      <td style="text-align:right;padding-right:8px;font-family:'JetBrains Mono',monospace;color:var(--accent-cyan);font-weight:800;">${data.capital.toLocaleString('vi-VN')} VND</td>
+    </tr>
+  `;
+
+  const activeHoldings = sortedHoldings.filter(h => h.actual_weight > 0);
+  
+  // Doughnut Chart
+  const pieCtx = document.getElementById('chartPortfolioPie');
+  if (portfolioPieChartObj) portfolioPieChartObj.destroy();
+  
+  const colorPalette = [
+    '#00e87a', '#00d4ff', '#ff4d6d', '#ffc94a', '#b06aff', 
+    '#ff7c3a', '#00ffd4', '#d0eeff', '#7a9cc0', '#b0d4ff'
+  ];
+  
+  const labels = activeHoldings.map(h => h.ticker);
+  const weights = activeHoldings.map(h => h.actual_weight);
+  
+  if (data.cash_left > 1000) {
+    labels.push('Tiền mặt');
+    weights.push(((data.cash_left / data.capital) * 100));
+  }
+  
+  portfolioPieChartObj = new Chart(pieCtx.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: weights,
+        backgroundColor: colorPalette.slice(0, labels.length),
+        borderWidth: 2,
+        borderColor: 'var(--bg-card)'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { color: '#7a9cc0', font: { size: 10 } }
+        }
+      }
+    }
+  });
+
+  // Frontier Scatter Chart
+  const frontierCtx = document.getElementById('chartPortfolioFrontier');
+  if (portfolioFrontierChartObj) portfolioFrontierChartObj.destroy();
+  
+  const points = data.efficient_frontier.map(pt => ({ x: pt.volatility, y: pt.expected_return }));
+  const optimalPt = { x: data.optimal_point.volatility, y: data.optimal_point.expected_return };
+  
+  portfolioFrontierChartObj = new Chart(frontierCtx.getContext('2d'), {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'Danh mục mô phỏng (Dirichlet)',
+          data: points,
+          backgroundColor: 'rgba(0, 212, 255, 0.12)',
+          borderColor: 'rgba(0, 212, 255, 0.25)',
+          borderWidth: 1,
+          pointRadius: 2.5,
+          pointHoverRadius: 4
+        },
+        {
+          label: 'Danh mục của bạn (Tối ưu)',
+          data: [optimalPt],
+          backgroundColor: 'var(--accent-red)',
+          borderColor: '#fff',
+          borderWidth: 2,
+          pointRadius: 7,
+          pointHoverRadius: 9,
+          pointStyle: 'circle'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          labels: { color: '#7a9cc0', font: { size: 9 } }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const pt = context.raw;
+              if (context.datasetIndex === 1) {
+                return `Danh mục Tối ưu: Rủi ro=${pt.x.toFixed(2)}%, Lợi nhuận=${pt.y.toFixed(2)}% (Sharpe=${data.sharpe_ratio.toFixed(2)})`;
+              }
+              return `Rủi ro: ${pt.x.toFixed(2)}%, Lợi nhuận: ${pt.y.toFixed(2)}%`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Rủi ro / Volatility (Std Dev %)', color: '#7a9cc0', font: { size: 10 } },
+          ticks: { color: '#3d5470', font: { size: 9 } },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        y: {
+          title: { display: true, text: 'Lợi nhuận kỳ vọng (%/năm)', color: '#7a9cc0', font: { size: 10 } },
+          ticks: { color: '#3d5470', font: { size: 9 } },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        }
+      }
+    }
+  });
+
+  // SHAP XAI list
+  const shapList = document.getElementById('portfolio-shap-explanations-list');
+  const explainedHoldings = sortedHoldings.filter(h => h.actual_weight > 0);
+  
+  shapList.innerHTML = explainedHoldings.map(h => `
+    <div style="background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.04);border-left:3px solid var(--accent-cyan);padding:8px 12px;border-radius:var(--radius-xs);font-size:0.75rem;">
+      <div style="font-weight:700;color:var(--text-primary);margin-bottom:2px;display:flex;justify-content:space-between;">
+        <span>🏦 ${h.ticker} &nbsp;·&nbsp; Tỷ trọng thực tế: <span style="color:var(--accent-cyan);">${h.actual_weight}%</span></span>
+        <span style="color:var(--text-muted);font-family:monospace;font-size:0.68rem;">Giá mua: ${h.price.toLocaleString('vi-VN')} VND</span>
+      </div>
+      <div style="color:var(--text-secondary);line-height:1.4;">${h.xai_explanation}</div>
+    </div>
+  `).join('');
+  
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── Smooth scroll for nav ──
+document.querySelectorAll('.nav-pill').forEach(pill => {
+  pill.addEventListener('click', function(e) {
+    document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+boot();
+</script>
+</body>
+</html>

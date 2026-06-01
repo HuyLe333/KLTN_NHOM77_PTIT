@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Forecast Verification Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg-primary:#080c16;--bg-secondary:#0d1525;--bg-card:#111b30;--bg-card-hover:#172240;
+      --accent-cyan:#00d4ff;--accent-green:#00e87a;--accent-red:#ff4d6d;--accent-yellow:#ffc94a;--accent-purple:#b06aff;--accent-orange:#ff7c3a;
+      --text-primary:#e2eeff;--text-secondary:#7a9cc0;--text-muted:#3d5470;
+      --border:rgba(0,212,255,0.10);--border-bright:rgba(0,212,255,0.28);
+      --radius:16px;--radius-sm:10px;--radius-xs:7px;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'Inter',sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;}
+    body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse 60% 50% at 15% 15%,rgba(0,212,255,0.055) 0%,transparent 60%),radial-gradient(ellipse 50% 60% at 85% 85%,rgba(176,106,255,0.055) 0%,transparent 60%);pointer-events:none;z-index:0;}
+
+    header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:68px;background:rgba(8,12,22,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+    .logo{display:flex;align-items:center;gap:12px;}
+    .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--accent-orange),var(--accent-red));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 18px rgba(255,124,58,0.35);}
+    .logo h1{font-size:1.05rem;font-weight:700;background:linear-gradient(135deg,var(--accent-orange),#ffe0c0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .logo p{font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;}
+    .header-right{display:flex;align-items:center;gap:10px;}
+    .status-badge{background:rgba(0,232,122,0.1);border:1px solid rgba(0,232,122,0.3);color:var(--accent-green);padding:5px 12px;border-radius:50px;font-size:0.72rem;font-weight:600;}
+
+    main{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:2rem 2rem 5rem;}
+
+    .nav-pills{display:flex;gap:6px;margin-bottom:1.5rem;}
+    .nav-pill{background:transparent;border:1px solid var(--border);color:var(--text-secondary);padding:8px 18px;border-radius:50px;font-size:0.8rem;font-weight:500;cursor:pointer;transition:all .2s;}
+    .nav-pill:hover,.nav-pill.active{background:rgba(0,212,255,0.1);border-color:var(--accent-cyan);color:var(--accent-cyan);}
+
+    .tab-panel{display:none;}
+    .tab-panel.active{display:block;}
+
+    .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:1.5rem;}
+    .kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.1rem 1.3rem;position:relative;overflow:hidden;}
+    .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+    .kpi-card.cyan::before{background:var(--accent-cyan);}
+    .kpi-card.green::before{background:var(--accent-green);}
+    .kpi-card.purple::before{background:var(--accent-purple);}
+    .kpi-card.orange::before{background:var(--accent-orange);}
+    .kpi-card.red::before{background:var(--accent-red);}
+    .kpi-card.yellow::before{background:var(--accent-yellow);}
+    .kpi-label{font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+    .kpi-value{font-size:1.6rem;font-weight:800;font-family:'JetBrains Mono',monospace;}
+    .kpi-sub{font-size:0.62rem;color:var(--text-muted);margin-top:3px;}
+
+    .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.2rem;margin-bottom:1.5rem;}
+    .card-title{font-size:0.85rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+
+    .data-table{width:100%;border-collapse:collapse;font-size:0.75rem;}
+    .data-table th{text-align:left;padding:8px 10px;color:var(--text-secondary);font-weight:600;border-bottom:1px solid var(--border);font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;}
+    .data-table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.03);}
+    .data-table tr:hover td{background:rgba(0,212,255,0.03);}
+    .data-table .mono{font-family:'JetBrains Mono',monospace;}
+
+    .badge{padding:3px 8px;border-radius:50px;font-size:0.65rem;font-weight:600;}
+    .badge-green{background:rgba(0,232,122,0.15);color:var(--accent-green);}
+    .badge-red{background:rgba(255,77,109,0.15);color:var(--accent-red);}
+    .badge-yellow{background:rgba(255,201,74,0.15);color:var(--accent-yellow);}
+
+    .btn{padding:8px 18px;border-radius:50px;font-size:0.78rem;font-weight:600;cursor:pointer;border:none;transition:all .25s;}
+    .btn-primary{background:linear-gradient(135deg,var(--accent-cyan),var(--accent-purple));color:#fff;}
+    .btn-primary:hover{box-shadow:0 0 20px rgba(0,212,255,0.3);transform:translateY(-1px);}
+
+    .cm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:320px;}
+    .cm-cell{padding:1rem;border-radius:var(--radius-xs);text-align:center;font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:700;}
+    .cm-cell.tn{background:rgba(0,232,122,0.08);border:1px solid rgba(0,232,122,0.2);color:var(--accent-green);}
+    .cm-cell.fp{background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.2);color:var(--accent-red);}
+    .cm-cell.fn{background:rgba(255,201,74,0.08);border:1px solid rgba(255,201,74,0.2);color:var(--accent-yellow);}
+    .cm-cell.tp{background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);color:var(--accent-cyan);}
+    .cm-label{font-size:0.6rem;color:var(--text-muted);margin-top:4px;font-family:'Inter',sans-serif;font-weight:400;}
+
+    .ticker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;max-height:400px;overflow-y:auto;}
+    .ticker-cell{padding:6px 8px;border-radius:var(--radius-xs);text-align:center;font-size:0.72rem;font-family:'JetBrains Mono',monospace;font-weight:600;border:1px solid var(--border);cursor:pointer;transition:all .2s;}
+    .ticker-cell:hover{transform:scale(1.05);box-shadow:0 0 12px rgba(0,212,255,0.2);}
+    .ticker-cell.selected{outline:2px solid var(--accent-cyan);outline-offset:1px;}
+
+    .sim-select{padding:8px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-size:0.8rem;outline:none;font-family:'JetBrains Mono',monospace;}
+    .sim-select:focus{border-color:var(--accent-cyan);}
+    .sim-select option{background:var(--bg-card);color:var(--text-primary);}
+    .sim-input{padding:8px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-size:0.85rem;outline:none;font-family:'JetBrains Mono',monospace;width:140px;}
+    .sim-input:focus{border-color:var(--accent-cyan);}
+    .result-box{background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:var(--radius-sm);padding:1.2rem;margin-top:1rem;}
+    .result-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.8rem;}
+    .result-row:last-child{border-bottom:none;}
+    .result-row .label{color:var(--text-secondary);}
+    .result-row .val{font-family:'JetBrains Mono',monospace;font-weight:600;}
+    .ticker-detail-panel{background:var(--bg-card);border:1px solid var(--border-bright);border-radius:var(--radius-sm);padding:1.2rem;margin-top:1rem;display:none;}
+
+    .search-box{width:100%;padding:10px 14px 10px 36px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:50px;color:var(--text-primary);font-size:0.8rem;outline:none;margin-bottom:1rem;transition:border-color .2s;}
+    .search-box:focus{border-color:var(--accent-cyan);}
+    .search-wrap{position:relative;}
+    .search-wrap::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:0.8rem;}
+
+    .pagination{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:1rem;}
+    .pagination button{background:var(--bg-card);border:1px solid var(--border);color:var(--text-secondary);padding:6px 12px;border-radius:var(--radius-xs);font-size:0.72rem;cursor:pointer;}
+    .pagination button:hover{border-color:var(--accent-cyan);color:var(--accent-cyan);}
+    .pagination button:disabled{opacity:0.3;cursor:not-allowed;}
+    .pagination span{font-size:0.72rem;color:var(--text-secondary);}
+
+    .loading{text-align:center;padding:3rem;color:var(--text-muted);font-size:0.85rem;}
+    .chart-wrap{position:relative;height:280px;}
+    @media(max-width:900px){.kpi-row{grid-template-columns:repeat(2,1fr);}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">🎯</div>
+    <div>
+      <h1>Forecast Verification</h1>
+      <p>Backtest & Real-time Tracking</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <a href="http://localhost:5000" class="status-badge" style="text-decoration:none;background:rgba(0,212,255,0.1);border-color:rgba(0,212,255,0.3);color:var(--accent-cyan);">← Main Dashboard</a>
+  </div>
+</header>
+
+<main>
+  <div class="nav-pills">
+    <button class="nav-pill active" onclick="switchTab('backtest')">📊 Backtest Lịch Sử</button>
+    <button class="nav-pill" onclick="switchTab('interactive')">🎲 Mô Phỏng Backtest</button>
+    <button class="nav-pill" onclick="switchTab('realtime')">🔴 Real-time Tracking</button>
+  </div>
+
+  <!-- ═══ TAB 1: BACKTEST ═══ -->
+  <div class="tab-panel active" id="tab-backtest">
+    <div class="loading" id="backtest-loading">⏳ Đang chạy Backtest trên tập Test...</div>
+
+    <div id="backtest-content" style="display:none;">
+      <div class="kpi-row" id="bt-kpis"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+        <div class="card">
+          <div class="card-title">📉 Confusion Matrix (Tập Test)</div>
+          <div style="display:flex;justify-content:center;"><div class="cm-grid" id="bt-cm"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📈 Rolling Accuracy Theo Tháng</div>
+          <div class="chart-wrap"><canvas id="chartTimeline"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🏆 Accuracy Theo Mã Cổ Phiếu</div>
+        <div class="ticker-grid" id="bt-ticker-grid"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 Chi Tiết Dự Báo vs Thực Tế</div>
+        <div class="search-wrap"><input type="text" class="search-box" id="bt-search" placeholder="Tìm mã cổ phiếu (VD: FPT, VNM...)" oninput="loadPredictions(1)"/></div>
+        <table class="data-table">
+          <thead><tr><th>Mã</th><th>Ngày</th><th>Dự Báo</th><th>Thực Tế</th><th>Kết Quả</th><th>Xác Suất Tăng</th></tr></thead>
+          <tbody id="bt-pred-body"></tbody>
+        </table>
+        <div class="pagination" id="bt-pagination"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: INTERACTIVE BACKTEST ═══ -->
+  <div class="tab-panel" id="tab-interactive">
+    <div class="card">
+      <div class="card-title">🎲 Mô Phỏng Dự Báo Trên Dữ Liệu Lịch Sử</div>
+      <p style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:1.2rem;line-height:1.5;">Chọn một mã cổ phiếu và một ngày trong tập Test. Hệ thống sẽ dự báo xu hướng T+5 dựa trên dữ liệu <strong>chỉ đến ngày đó</strong>, sau đó so sánh với kết quả thực tế đã biết.</p>
+
+      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+        <div>
+          <label style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;">Mã cổ phiếu</label>
+          <select id="sim-ticker" class="sim-select" onchange="onSimTickerChange()"><option value="">-- Chọn mã --</option></select>
+        </div>
+        <div>
+          <label style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;">Ngày backtest</label>
+          <select id="sim-date" class="sim-select"><option value="">-- Chọn mã trước --</option></select>
+        </div>
+        <button class="btn btn-primary" onclick="pickRandomDate()" style="padding:8px 14px;">🎲 Ngày Ngẫu Nhiên</button>
+        <button class="btn btn-primary" onclick="runSimulation()" style="background:linear-gradient(135deg,var(--accent-green),var(--accent-cyan));">⚡ Chạy Dự Báo</button>
+      </div>
+    </div>
+
+    <!-- Simulation Result -->
+    <div id="sim-result" style="display:none;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+        <div class="card">
+          <div class="card-title">🤖 Kết Quả Dự Báo AI</div>
+          <div id="sim-prediction-box"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">✅ Đối Chiếu Thực Tế</div>
+          <div id="sim-actual-box"></div>
+          <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
+            <label style="font-size:0.7rem;color:var(--text-secondary);display:block;margin-bottom:6px;">📝 Nhập giá đóng cửa ngày T+5 (tùy chọn):</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="number" step="0.01" id="sim-manual-price" class="sim-input" placeholder="VD: 85000"/>
+              <button class="btn btn-primary" onclick="verifyManualPrice()" style="padding:6px 14px;font-size:0.72rem;">Đối chiếu</button>
+            </div>
+            <div id="sim-manual-result" style="margin-top:8px;font-size:0.78rem;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 Giá Trị Đặc Trưng Đầu Vào (Features)</div>
+        <div id="sim-features" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;"></div>
+      </div>
+    </div>
+
+    <!-- Ticker Detail Panel -->
+    <div class="card" id="sim-ticker-detail" style="display:none;">
+      <div class="card-title" id="sim-ticker-detail-title"></div>
+      <div class="kpi-row" style="grid-template-columns:repeat(5,1fr);" id="sim-ticker-kpis"></div>
+      <table class="data-table" style="margin-top:1rem;">
+        <thead><tr><th>Ngày</th><th>Dự Báo</th><th>Thực Tế</th><th>Kết Quả</th><th>Xác Suất Tăng</th></tr></thead>
+        <tbody id="sim-ticker-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 3: REAL-TIME ═══ -->
+  <div class="tab-panel" id="tab-realtime">
+    <div class="kpi-row" id="rt-kpis">
+      <div class="kpi-card cyan"><div class="kpi-label">Tổng Dự Báo</div><div class="kpi-value" id="rt-total">—</div></div>
+      <div class="kpi-card green"><div class="kpi-label">Đã Xác Minh</div><div class="kpi-value" id="rt-verified">—</div></div>
+      <div class="kpi-card yellow"><div class="kpi-label">Đang Chờ</div><div class="kpi-value" id="rt-pending">—</div></div>
+      <div class="kpi-card purple"><div class="kpi-label">Hit Rate</div><div class="kpi-value" id="rt-hitrate">—</div></div>
+    </div>
+
+    <div style="margin-bottom:1.5rem;">
+      <button class="btn btn-primary" id="btn-verify" onclick="verifyPredictions()">🔄 Xác Minh Dự Báo Đến Hạn</button>
+      <span id="verify-status" style="margin-left:12px;font-size:0.78rem;color:var(--text-secondary);"></span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr;gap:1.5rem;">
+      <div class="card">
+        <div class="card-title">📈 Cumulative Accuracy Theo Ngày</div>
+        <div class="chart-wrap"><canvas id="chartCumulative"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Danh Sách Dự Báo Real-time</div>
+      <table class="data-table">
+        <thead><tr><th>Mã</th><th>Ngày Dự Báo</th><th>Ngày Mục Tiêu</th><th>Dự Báo</th><th>Xác Suất</th><th>Thực Tế</th><th>Return</th><th>Trạng Thái</th></tr></thead>
+        <tbody id="rt-pred-body"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script>
+// ═══ TAB SWITCHING ═══
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.target.classList.add('active');
+  if (tab === 'realtime') loadRealtime();
+  if (tab === 'interactive') loadInteractiveInit();
+}
+
+// ═══ BACKTEST ═══
+let timelineChart = null;
+let cumulativeChart = null;
+
+async function loadBacktest() {
+  try {
+    const [sumRes, tickerRes, tlRes] = await Promise.all([
+      fetch('/api/backtest/summary'),
+      fetch('/api/backtest/by-ticker'),
+      fetch('/api/backtest/timeline')
+    ]);
+    const summary = await sumRes.json();
+    const tickers = await tickerRes.json();
+    const timeline = await tlRes.json();
+
+    document.getElementById('backtest-loading').style.display = 'none';
+    document.getElementById('backtest-content').style.display = 'block';
+
+    // KPIs
+    const kpiData = [
+      {label:'Accuracy',value:(summary.accuracy*100).toFixed(2)+'%',cls:'cyan',sub:`${summary.total_samples.toLocaleString()} mẫu test`},
+      {label:'Precision',value:(summary.precision*100).toFixed(2)+'%',cls:'green',sub:'Tỷ lệ dự báo Tăng đúng'},
+      {label:'Recall',value:(summary.recall*100).toFixed(2)+'%',cls:'purple',sub:'Tỷ lệ phát hiện Tăng'},
+      {label:'F1-Score',value:(summary.f1_score*100).toFixed(2)+'%',cls:'orange',sub:`AUC-ROC: ${summary.auc_roc}`}
+    ];
+    document.getElementById('bt-kpis').innerHTML = kpiData.map(k =>
+      `<div class="kpi-card ${k.cls}"><div class="kpi-label">${k.label}</div><div class="kpi-value" style="color:var(--accent-${k.cls})">${k.value}</div><div class="kpi-sub">${k.sub}</div></div>`
+    ).join('');
+
+    // Confusion Matrix
+    const cm = summary.confusion_matrix;
+    document.getElementById('bt-cm').innerHTML = `
+      <div class="cm-cell tn">${cm[0][0].toLocaleString()}<div class="cm-label">True Negative</div></div>
+      <div class="cm-cell fp">${cm[0][1].toLocaleString()}<div class="cm-label">False Positive</div></div>
+      <div class="cm-cell fn">${cm[1][0].toLocaleString()}<div class="cm-label">False Negative</div></div>
+      <div class="cm-cell tp">${cm[1][1].toLocaleString()}<div class="cm-label">True Positive</div></div>`;
+
+    // Timeline Chart
+    if (timelineChart) timelineChart.destroy();
+    timelineChart = new Chart(document.getElementById('chartTimeline').getContext('2d'), {
+      type:'line',
+      data:{
+        labels: timeline.map(t=>t.month),
+        datasets:[{
+          label:'Accuracy',
+          data:timeline.map(t=>t.accuracy*100),
+          borderColor:'#00d4ff',backgroundColor:'rgba(0,212,255,0.08)',
+          borderWidth:2,pointRadius:3,fill:true,tension:0.3
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        scales:{
+          y:{min:40,max:70,ticks:{callback:v=>v+'%',color:'#7a9cc0',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
+          x:{ticks:{color:'#7a9cc0',font:{size:9},maxTicksLimit:12},grid:{display:false}}
+        },
+        plugins:{legend:{display:false}}
+      }
+    });
+
+    // Ticker Grid — clickable
+    document.getElementById('bt-ticker-grid').innerHTML = tickers.map(t => {
+      const pct = (t.accuracy*100).toFixed(1);
+      const color = t.accuracy >= 0.55 ? 'var(--accent-green)' : t.accuracy < 0.50 ? 'var(--accent-red)' : 'var(--accent-yellow)';
+      const bg = t.accuracy >= 0.55 ? 'rgba(0,232,122,0.08)' : t.accuracy < 0.50 ? 'rgba(255,77,109,0.08)' : 'rgba(255,201,74,0.08)';
+      return `<div class="ticker-cell" onclick="showTickerDetail('${t.ticker}')" style="color:${color};background:${bg};border-color:${color}30" title="Click để xem chi tiết">${t.ticker}<br>${pct}%</div>`;
+    }).join('');
+
+    loadPredictions(1);
+  } catch(e) {
+    document.getElementById('backtest-loading').textContent = '❌ Lỗi: ' + e.message;
+  }
+}
+
+async function loadPredictions(page) {
+  const ticker = document.getElementById('bt-search').value.trim().toUpperCase();
+  const url = `/api/backtest/predictions?page=${page}&per_page=30${ticker ? '&ticker='+ticker : ''}`;
+  const res = await fetch(url);
+  const data = await res.json();
+
+  document.getElementById('bt-pred-body').innerHTML = data.predictions.map(p => {
+    const predLabel = p.predicted === 1 ? '↑ Tăng' : '↓ Giảm';
+    const actLabel = p.actual === 1 ? '↑ Tăng' : '↓ Giảm';
+    const predCls = p.predicted === 1 ? 'badge-green' : 'badge-red';
+    const actCls = p.actual === 1 ? 'badge-green' : 'badge-red';
+    const resCls = p.correct ? 'badge-green' : 'badge-red';
+    const resText = p.correct ? '✅ Đúng' : '❌ Sai';
+    return `<tr>
+      <td class="mono" style="font-weight:600;">${p.ticker}</td>
+      <td class="mono">${p.date}</td>
+      <td><span class="badge ${predCls}">${predLabel}</span></td>
+      <td><span class="badge ${actCls}">${actLabel}</span></td>
+      <td><span class="badge ${resCls}">${resText}</span></td>
+      <td class="mono">${(p.probability_up*100).toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+
+  // Pagination
+  const {total_pages} = data;
+  let phtml = `<button ${page<=1?'disabled':''} onclick="loadPredictions(${page-1})">‹</button>`;
+  phtml += `<span>Trang ${page} / ${total_pages} (${data.total.toLocaleString()} kết quả)</span>`;
+  phtml += `<button ${page>=total_pages?'disabled':''} onclick="loadPredictions(${page+1})">›</button>`;
+  document.getElementById('bt-pagination').innerHTML = phtml;
+}
+
+// ═══ REAL-TIME ═══
+async function loadRealtime() {
+  try {
+    const [sumRes, predRes, chartRes] = await Promise.all([
+      fetch('/api/realtime/summary'),
+      fetch('/api/realtime/predictions'),
+      fetch('/api/realtime/accuracy-chart')
+    ]);
+    const summary = await sumRes.json();
+    const preds = await predRes.json();
+    const chartData = await chartRes.json();
+
+    document.getElementById('rt-total').textContent = summary.total_predictions;
+    document.getElementById('rt-verified').textContent = summary.verified;
+    document.getElementById('rt-pending').textContent = summary.pending;
+    document.getElementById('rt-hitrate').textContent = summary.verified > 0 ? (summary.hit_rate*100).toFixed(1)+'%' : '—';
+
+    // Predictions table
+    document.getElementById('rt-pred-body').innerHTML = preds.map(p => {
+      const predLabel = p.prediction === 1 ? '↑ Tăng' : '↓ Giảm';
+      const predCls = p.prediction === 1 ? 'badge-green' : 'badge-red';
+      let statusHtml, actualHtml, returnHtml;
+      if (p.status === 'correct') {
+        statusHtml = '<span class="badge badge-green">✅ Đúng</span>';
+        actualHtml = `<span class="badge ${p.actual_outcome===1?'badge-green':'badge-red'}">${p.actual_outcome===1?'↑ Tăng':'↓ Giảm'}</span>`;
+        returnHtml = `<span style="color:${p.actual_return>=0?'var(--accent-green)':'var(--accent-red)'};" class="mono">${(p.actual_return*100).toFixed(2)}%</span>`;
+      } else if (p.status === 'wrong') {
+        statusHtml = '<span class="badge badge-red">❌ Sai</span>';
+        actualHtml = `<span class="badge ${p.actual_outcome===1?'badge-green':'badge-red'}">${p.actual_outcome===1?'↑ Tăng':'↓ Giảm'}</span>`;
+        returnHtml = `<span style="color:${p.actual_return>=0?'var(--accent-green)':'var(--accent-red)'};" class="mono">${(p.actual_return*100).toFixed(2)}%</span>`;
+      } else {
+        statusHtml = '<span class="badge badge-yellow">⏳ Chờ</span>';
+        actualHtml = '—';
+        returnHtml = '—';
+      }
+      return `<tr>
+        <td class="mono" style="font-weight:600;">${p.ticker}</td>
+        <td class="mono">${p.prediction_date}</td>
+        <td class="mono">${p.target_date}</td>
+        <td><span class="badge ${predCls}">${predLabel}</span></td>
+        <td class="mono">${p.probability_up?(p.probability_up*100).toFixed(1)+'%':'—'}</td>
+        <td>${actualHtml}</td>
+        <td>${returnHtml}</td>
+        <td>${statusHtml}</td>
+      </tr>`;
+    }).join('');
+
+    // Cumulative chart
+    if (chartData.length > 0) {
+      if (cumulativeChart) cumulativeChart.destroy();
+      cumulativeChart = new Chart(document.getElementById('chartCumulative').getContext('2d'), {
+        type:'line',
+        data:{
+          labels:chartData.map(d=>d.date),
+          datasets:[{
+            label:'Cumulative Accuracy',
+            data:chartData.map(d=>d.cumulative_accuracy*100),
+            borderColor:'#00e87a',backgroundColor:'rgba(0,232,122,0.08)',
+            borderWidth:2,pointRadius:3,fill:true,tension:0.3
+          }]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          scales:{
+            y:{min:0,max:100,ticks:{callback:v=>v+'%',color:'#7a9cc0'},grid:{color:'rgba(255,255,255,0.04)'}},
+            x:{ticks:{color:'#7a9cc0',font:{size:9}},grid:{display:false}}
+          },
+          plugins:{legend:{display:false}}
+        }
+      });
+    }
+  } catch(e) {
+    console.error('Realtime load error:', e);
+  }
+}
+
+async function verifyPredictions() {
+  const btn = document.getElementById('btn-verify');
+  const status = document.getElementById('verify-status');
+  btn.disabled = true;
+  status.textContent = '⏳ Đang xác minh...';
+  try {
+    const res = await fetch('/api/realtime/verify', {method:'POST'});
+    const data = await res.json();
+    status.textContent = data.message;
+    status.style.color = 'var(--accent-green)';
+    loadRealtime();
+  } catch(e) {
+    status.textContent = '❌ Lỗi: ' + e.message;
+    status.style.color = 'var(--accent-red)';
+  }
+  btn.disabled = false;
+}
+
+// ═══ INTERACTIVE BACKTEST ═══
+let simInitialized = false;
+async function loadInteractiveInit() {
+  if (simInitialized) return;
+  const res = await fetch('/api/backtest/tickers-list');
+  const tickers = await res.json();
+  const sel = document.getElementById('sim-ticker');
+  sel.innerHTML = '<option value="">-- Chọn mã --</option>' + tickers.map(t => `<option value="${t}">${t}</option>`).join('');
+  simInitialized = true;
+}
+
+async function onSimTickerChange() {
+  const ticker = document.getElementById('sim-ticker').value;
+  const dateSel = document.getElementById('sim-date');
+  if (!ticker) { dateSel.innerHTML = '<option value="">-- Chọn mã trước --</option>'; return; }
+  dateSel.innerHTML = '<option value="">⏳ Đang tải...</option>';
+  const res = await fetch(`/api/backtest/available-dates?ticker=${ticker}`);
+  const data = await res.json();
+  dateSel.innerHTML = '<option value="">-- Chọn ngày --</option>' + data.dates.map(d => `<option value="${d}">${d}</option>`).join('');
+}
+
+function pickRandomDate() {
+  const dateSel = document.getElementById('sim-date');
+  const opts = Array.from(dateSel.options).filter(o => o.value);
+  if (opts.length === 0) { alert('Vui lòng chọn mã cổ phiếu trước!'); return; }
+  const rand = opts[Math.floor(Math.random() * opts.length)];
+  dateSel.value = rand.value;
+}
+
+async function runSimulation() {
+  const ticker = document.getElementById('sim-ticker').value;
+  const date = document.getElementById('sim-date').value;
+  if (!ticker || !date) { alert('Vui lòng chọn mã cổ phiếu và ngày!'); return; }
+
+  const res = await fetch('/api/backtest/simulate', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ticker, date})
+  });
+  const d = await res.json();
+  if (d.error) { alert(d.error); return; }
+
+  document.getElementById('sim-result').style.display = 'block';
+
+  // Prediction box
+  const predColor = d.prediction === 1 ? 'var(--accent-green)' : 'var(--accent-red)';
+  const predIcon = d.prediction === 1 ? '↑' : '↓';
+  document.getElementById('sim-prediction-box').innerHTML = `
+    <div style="text-align:center;margin-bottom:1rem;">
+      <div style="font-size:2.2rem;font-weight:800;color:${predColor};">${predIcon} ${d.label}</div>
+      <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:4px;">Độ tin cậy: <strong style="color:${predColor}">${(d.confidence*100).toFixed(1)}%</strong></div>
+    </div>
+    <div class="result-box">
+      <div class="result-row"><span class="label">Mã cổ phiếu</span><span class="val">${d.ticker}</span></div>
+      <div class="result-row"><span class="label">Ngày dữ liệu (T)</span><span class="val">${d.date}</span></div>
+      <div class="result-row"><span class="label">Giá đóng cửa T+0</span><span class="val" style="color:var(--accent-cyan); font-weight: 700;">${d.price_t0 ? d.price_t0.toLocaleString('vi-VN') + ' VND' : '—'}</span></div>
+      <div class="result-row"><span class="label">Ngày mục tiêu (T+5)</span><span class="val">${d.target_date || '—'}</span></div>
+      <div class="result-row"><span class="label">Xác suất Tăng</span><span class="val" style="color:var(--accent-green)">${(d.probability_up*100).toFixed(2)}%</span></div>
+      <div class="result-row"><span class="label">Xác suất Giảm</span><span class="val" style="color:var(--accent-red)">${(d.probability_down*100).toFixed(2)}%</span></div>
+    </div>`;
+
+  // Actual box
+  let actualHtml = '';
+  if (d.actual_outcome !== null) {
+    const actColor = d.actual_outcome === 1 ? 'var(--accent-green)' : 'var(--accent-red)';
+    const actIcon = d.actual_outcome === 1 ? '↑ Tăng' : '↓ Giảm';
+    const correctColor = d.is_correct ? 'var(--accent-green)' : 'var(--accent-red)';
+    const correctText = d.is_correct ? '✅ DỰ BÁO CHÍNH XÁC' : '❌ DỰ BÁO SAI';
+    actualHtml = `
+      <div style="text-align:center;margin-bottom:1rem;">
+        <div style="font-size:1.5rem;font-weight:800;color:${correctColor};">${correctText}</div>
+      </div>
+      <div class="result-box">
+        <div class="result-row"><span class="label">Giá đóng cửa T+5</span><span class="val" style="color:var(--accent-cyan); font-weight: 700;">${d.price_t5 ? d.price_t5.toLocaleString('vi-VN') + ' VND' : '—'}</span></div>
+        <div class="result-row"><span class="label">Xu hướng thực tế</span><span class="val" style="color:${actColor}">${actIcon}</span></div>
+        <div class="result-row"><span class="label">Tỷ suất sinh lời T+5</span><span class="val" style="color:${d.actual_return_pct >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${d.actual_return_pct !== null ? d.actual_return_pct + '%' : '—'}</span></div>
+      </div>`;
+  } else {
+    actualHtml = '<div style="text-align:center;color:var(--text-muted);padding:2rem;">⏳ Chưa có dữ liệu thực tế</div>';
+  }
+  document.getElementById('sim-actual-box').innerHTML = actualHtml;
+
+  // Features
+  document.getElementById('sim-features').innerHTML = d.features.map(f => {
+    return `<div style="background:var(--bg-secondary);padding:6px 10px;border-radius:var(--radius-xs);border:1px solid var(--border);display:flex;justify-content:space-between;">
+      <span style="font-size:0.7rem;color:var(--text-secondary);">${f.name}</span>
+      <span class="mono" style="font-size:0.72rem;font-weight:600;">${f.value}</span>
+    </div>`;
+  }).join('');
+
+  // Store for manual verification
+  window._simData = d;
+  document.getElementById('sim-manual-price').value = '';
+  document.getElementById('sim-manual-result').innerHTML = '';
+}
+
+function verifyManualPrice() {
+  const price = parseFloat(document.getElementById('sim-manual-price').value);
+  if (isNaN(price) || !window._simData) { alert('Nhập giá hợp lệ!'); return; }
+  const d = window._simData;
+
+  const el = document.getElementById('sim-manual-result');
+  const predLabel = d.prediction === 1 ? 'Tăng' : 'Giảm';
+  const predColor = d.prediction === 1 ? 'var(--accent-green)' : 'var(--accent-red)';
+
+  let comparisonHtml = '';
+  if (d.price_t0) {
+    const manualReturn = ((price - d.price_t0) / d.price_t0) * 100;
+    const manualOutcome = manualReturn > 0 ? 1 : 0;
+    const isManualCorrect = manualOutcome === d.prediction;
+    const outcomeText = manualOutcome === 1 ? '↑ Tăng' : '↓ Giảm';
+    const outcomeColor = manualOutcome === 1 ? 'var(--accent-green)' : 'var(--accent-red)';
+    const statusText = isManualCorrect ? '✅ DỰ BÁO CHÍNH XÁC' : '❌ DỰ BÁO SAI';
+    const statusColor = isManualCorrect ? 'var(--accent-green)' : 'var(--accent-red)';
+
+    comparisonHtml = `
+      <div style="margin-top:6px; font-weight:700; color:${statusColor}; font-size:0.8rem;">
+        ${statusText}
+      </div>
+      <div style="font-size:0.75rem; margin-top:4px;">
+        Biến động tính toán: <strong style="color:${outcomeColor}">${outcomeText} (${manualReturn >= 0 ? '+' : ''}${manualReturn.toFixed(2)}%)</strong>
+      </div>
+    `;
+  } else {
+    comparisonHtml = `<div style="font-size:0.68rem;color:var(--text-muted);margin-top:4px;">Không tìm thấy giá T+0 của ngày này để tính tỷ suất sinh lời tự động.</div>`;
+  }
+
+  el.innerHTML = `<div style="padding:10px;background:rgba(0,212,255,0.05);border-radius:var(--radius-xs);border:1px solid rgba(0,212,255,0.2);">
+    <div style="font-size:0.75rem;">💰 Giá đóng cửa T+0: <strong>${d.price_t0 ? d.price_t0.toLocaleString('vi-VN') + ' VND' : '—'}</strong></div>
+    <div style="font-size:0.75rem;margin-top:2px;">💰 Giá đóng cửa T+5 nhập: <strong style="color:var(--accent-cyan);">${price.toLocaleString('vi-VN')} VND</strong></div>
+    <div style="font-size:0.75rem;margin-top:2px;">📊 Dự báo AI: <strong style="color:${predColor}">${predLabel}</strong> (${(d.confidence*100).toFixed(1)}%)</div>
+    ${comparisonHtml}
+  </div>`;
+}
+
+// ═══ TICKER DETAIL (from grid click) ═══
+async function showTickerDetail(ticker) {
+  // Highlight selected
+  document.querySelectorAll('.ticker-cell').forEach(c => c.classList.remove('selected'));
+  event.target.closest('.ticker-cell')?.classList.add('selected');
+
+  const res = await fetch(`/api/backtest/ticker-detail?ticker=${ticker}`);
+  const d = await res.json();
+  if (d.error) return;
+
+  const panel = document.getElementById('sim-ticker-detail') || document.createElement('div');
+  // Find or create the panel after ticker grid
+  let existing = document.getElementById('bt-ticker-detail-panel');
+  if (!existing) {
+    existing = document.createElement('div');
+    existing.id = 'bt-ticker-detail-panel';
+    existing.className = 'card';
+    existing.style.marginTop = '1rem';
+    existing.style.borderColor = 'rgba(0,212,255,0.25)';
+    document.getElementById('bt-ticker-grid').parentElement.after(existing);
+  }
+  existing.style.display = 'block';
+
+  const kpis = [
+    {label:'Accuracy',value:(d.accuracy*100).toFixed(1)+'%',cls:'cyan'},
+    {label:'Precision',value:(d.precision*100).toFixed(1)+'%',cls:'green'},
+    {label:'Recall',value:(d.recall*100).toFixed(1)+'%',cls:'purple'},
+    {label:'F1-Score',value:(d.f1_score*100).toFixed(1)+'%',cls:'orange'},
+    {label:'Đúng/Tổng',value:`${d.correct_count}/${d.total}`,cls:'yellow'}
+  ];
+
+  let html = `<div class="card-title">📈 Chi Tiết: ${d.ticker}</div>`;
+  html += `<div class="kpi-row" style="grid-template-columns:repeat(5,1fr);margin-bottom:1rem;">`;
+  html += kpis.map(k => `<div class="kpi-card ${k.cls}"><div class="kpi-label">${k.label}</div><div class="kpi-value" style="color:var(--accent-${k.cls});font-size:1.2rem;">${k.value}</div></div>`).join('');
+  html += `</div>`;
+  html += `<table class="data-table"><thead><tr><th>Ngày</th><th>Dự Báo</th><th>Thực Tế</th><th>Kết Quả</th><th>Xác Suất Tăng</th></tr></thead><tbody>`;
+  html += d.predictions.map(p => {
+    const predCls = p.predicted===1?'badge-green':'badge-red';
+    const actCls = p.actual===1?'badge-green':'badge-red';
+    const resCls = p.correct?'badge-green':'badge-red';
+    return `<tr><td class="mono">${p.date}</td><td><span class="badge ${predCls}">${p.predicted===1?'↑Tăng':'↓Giảm'}</span></td><td><span class="badge ${actCls}">${p.actual===1?'↑Tăng':'↓Giảm'}</span></td><td><span class="badge ${resCls}">${p.correct?'✅':'❌'}</span></td><td class="mono">${(p.probability_up*100).toFixed(1)}%</td></tr>`;
+  }).join('');
+  html += `</tbody></table>`;
+  existing.innerHTML = html;
+  existing.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ═══ BOOT ═══
+loadBacktest();
+</script>
+</body>
+</html>
