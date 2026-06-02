@@ -229,7 +229,18 @@ def api_ticker_detail(ticker_name):
         latest_row = df_norm.iloc[0]
         pred_row = df_pred.iloc[0]
         
-        values = [float(latest_row[f]) for f in feature_cols]
+        stats = ticker_stats.get(ticker_upper, {})
+        medians = stats.get('median_features', {})
+        
+        values = []
+        for f in feature_cols:
+            val = latest_row[f]
+            if val is None or pd.isna(val):
+                val = medians.get(f, 0.0)
+                if val is None or pd.isna(val):
+                    val = 0.0
+            values.append(float(val))
+            
         X = np.array([values])
         pred = int(pred_row['prediction'])
         prob_up = float(pred_row['probability_up'])
@@ -268,8 +279,6 @@ def api_ticker_detail(ticker_name):
             # Sort by absolute SHAP value descending
             shap_explanations.sort(key=lambda x: abs(x['shap_value']), reverse=True)
             
-        stats = ticker_stats.get(ticker_upper, {})
-        medians = stats.get('median_features', {})
         total_samples = stats.get('total_samples', 0)
         test_accuracy = stats.get('test_accuracy', 0.51)
         predictability = stats.get('predictability', 'medium')
@@ -302,7 +311,12 @@ def predict():
 
     data = request.json
     try:
-        values = [float(data.get(f, 0)) for f in feature_cols]
+        values = []
+        for f in feature_cols:
+            val = data.get(f)
+            if val is None or pd.isna(val):
+                val = 0.0
+            values.append(float(val))
         X = np.array([values])
         pred  = int(model.predict(X)[0])
         proba = model.predict_proba(X)[0].tolist()
@@ -412,7 +426,12 @@ def api_portfolio_optimize():
         for t in valid_tickers:
             stats = ticker_stats[t]
             medians = stats.get('median_features', {})
-            values = [float(medians.get(f, 0)) for f in feature_cols]
+            values = []
+            for f in feature_cols:
+                val = medians.get(f, 0.0)
+                if val is None or pd.isna(val):
+                    val = 0.0
+                values.append(float(val))
             X = np.array([values])
             proba = model.predict_proba(X)[0].tolist()
             prob_up = proba[1]
