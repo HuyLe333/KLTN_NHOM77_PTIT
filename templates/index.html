@@ -1072,6 +1072,12 @@ async function boot() {
   globalMetrics = await mRes.json();
   allTickers    = await tRes.json();
 
+  // Set header dynamically
+  const headerDesc = document.getElementById('model-desc-header');
+  if (headerDesc && globalMetrics) {
+    headerDesc.textContent = `XGBoost · ${globalMetrics.n_features} features · Train/Test 80/20`;
+  }
+
   renderMetrics(globalMetrics);
   renderCharts(globalMetrics);
   renderFeatureImportance(globalMetrics);
@@ -1252,9 +1258,9 @@ function onEvalConfidenceChange(val) {
   const headerDesc = document.getElementById('model-desc-header');
   if (headerDesc) {
     if (val === "0.0") {
-      headerDesc.textContent = "XGBoost · 16 features · Train/Test 80/20";
+      headerDesc.textContent = `XGBoost · ${globalMetrics.n_features} features · Train/Test 80/20`;
     } else {
-      headerDesc.innerHTML = `XGBoost · 16 features · Train/Test 80/20 · Số mẫu giữ lại: <strong>${fmt(targetMetrics.samples)}</strong> (${targetMetrics.pct_samples}%)`;
+      headerDesc.innerHTML = `XGBoost · ${globalMetrics.n_features} features · Train/Test 80/20 · Số mẫu giữ lại: <strong>${fmt(targetMetrics.samples)}</strong> (${targetMetrics.pct_samples}%)`;
     }
   }
   

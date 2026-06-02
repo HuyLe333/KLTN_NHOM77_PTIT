@@ -87,6 +87,8 @@ def main():
         sd DOUBLE,
         fs DOUBLE,
         fb DOUBLE,
+        rs DOUBLE,
+        rm DOUBLE,
         target INT,
         PRIMARY KEY (ticker, date)
     ) ENGINE=InnoDB;
@@ -133,6 +135,8 @@ def main():
         sd DOUBLE,
         fs DOUBLE,
         fb DOUBLE,
+        rs DOUBLE,
+        rm DOUBLE,
         PRIMARY KEY (ticker, date)
     ) ENGINE=InnoDB;
     """)
@@ -193,6 +197,8 @@ def main():
     df['sd'] = 0.0
     df['fs'] = 0.0
     df['fb'] = 0.0
+    df['rs'] = 0.0
+    df['rm'] = 0.0
 
     # Compute target labels (T+5 return prediction target)
     print("    Calculating target labels...")
@@ -210,7 +216,7 @@ def main():
         'ticker', 'date', 'close_LogReturn', 'price_vs_sma50', 'volatility_20', 'volume_ratio_20',
         'return_3d', 'return_5d', 'return_10d', 'return_20d', 'sma_50_LogReturn', 'volume_LogReturn',
         'PCA_Trend', 'PCA_Oscillators', 'PCA_MACD', 'PCA_ShortReturns', 'atr_14', 'high_low', 'market_return', 
-        'foreign_net', 'bu', 'sd', 'fs', 'fb', 'target'
+        'foreign_net', 'bu', 'sd', 'fs', 'fb', 'rs', 'rm', 'target'
     ]
     df_db = df[train_cols].dropna()
     print(f"    OK Cleaned training rows for DB ingest: {df_db.shape[0]}")

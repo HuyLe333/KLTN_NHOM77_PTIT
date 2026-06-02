@@ -41,7 +41,9 @@ FEATURE_LABELS_VI = {
     'PCA_ShortReturns': 'Thành phần tỷ suất ngắn hạn (PCA)',
     'atr_14': 'Chỉ số biên độ biến động ATR 14',
     'high_low': 'Biên độ dao động trong phiên (High - Low)',
-    'market_return': 'Tỷ suất sinh lời của VN-Index'
+    'market_return': 'Tỷ suất sinh lời của VN-Index',
+    'rs': 'Chỉ số RRG RS-Ratio (Sức mạnh tương đối)',
+    'rm': 'Chỉ số RRG RS-Momentum (Động lượng xoay vòng)'
 }
 
 _cached_resources = {
@@ -98,7 +100,7 @@ def load_resources():
             print(f"Error loading ticker stats from JSON: {e}. Querying MySQL...")
             try:
                 engine = create_engine(f"mysql+mysqlconnector://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}")
-                df = pd.read_sql("SELECT ticker, date, price_vs_sma50, volatility_20, volume_ratio_20, return_3d, return_5d, return_10d, return_20d, sma_50_LogReturn, volume_LogReturn, PCA_Trend, PCA_Oscillators, PCA_MACD, PCA_ShortReturns, atr_14, high_low, market_return FROM model_training_data", engine)
+                df = pd.read_sql("SELECT ticker, date, price_vs_sma50, volatility_20, volume_ratio_20, return_3d, return_5d, return_10d, return_20d, sma_50_LogReturn, volume_LogReturn, PCA_Trend, PCA_Oscillators, PCA_MACD, PCA_ShortReturns, atr_14, high_low, market_return, rs, rm FROM model_training_data", engine)
                 
                 ticker_stats = {}
                 for ticker, group in df.groupby('ticker'):

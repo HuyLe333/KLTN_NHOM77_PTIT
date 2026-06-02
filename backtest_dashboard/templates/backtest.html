@@ -316,9 +316,10 @@ async function loadBacktest() {
     const infoEl = document.getElementById('bt-filtered-info');
     if (infoEl) {
       if (offset === '0.00') {
+        window.totalUnfilteredCount = summary.total_samples;
         infoEl.textContent = 'Đang hiển thị toàn bộ tập dữ liệu (Không lọc)';
       } else {
-        const totalUnfiltered = 30206;
+        const totalUnfiltered = window.totalUnfilteredCount || 30671;
         const coverage = ((summary.total_samples / totalUnfiltered) * 100).toFixed(1);
         infoEl.textContent = `Lọc hoạt động: ${summary.total_samples.toLocaleString()} / ${totalUnfiltered.toLocaleString()} mẫu (${coverage}% cơ hội giao dịch)`;
       }

@@ -229,6 +229,11 @@ def main():
         df_merged['high_low'] = (high - low) / close
         df_merged['market_return'] = index_close.pct_change(1)
         
+        # Calculate daily RRG
+        close_ratio = close / index_close
+        df_merged['rs'] = 100 * close_ratio.rolling(window=12).mean() / close_ratio.rolling(window=26).mean()
+        df_merged['rm'] = 100 * df_merged['rs'] / df_merged['rs'].rolling(window=9).mean()
+        
         # Clean infinite and null values from feature calculations
         df_merged.replace([np.inf, -np.inf], np.nan, inplace=True)
         
@@ -239,7 +244,7 @@ def main():
             'high_low', 'market_return'
         ]
         
-        df_features = df_merged.dropna(subset=['close_LogReturn'] + feature_cols_base).copy()
+        df_features = df_merged.dropna(subset=['close_LogReturn'] + feature_cols_base + ['rs', 'rm']).copy()
         if df_features.empty:
             continue
             
@@ -278,21 +283,23 @@ def main():
                 'bu': float(row.get('bu', 0.0)),
                 'sd': float(row.get('sd', 0.0)),
                 'fs': float(row.get('fs', 0.0)),
-                'fb': float(row.get('fb', 0.0))
+                'fb': float(row.get('fb', 0.0)),
+                'rs': float(row['rs']),
+                'rm': float(row['rm'])
             })
             
         # Get latest day row for prediction
         latest_row = df_features.iloc[-1]
         latest_date = latest_row['date']
         
-        # Features for model input (21 columns)
+        # Features for model input (23 columns)
         feature_cols_model = [
             'price_vs_sma50', 'volatility_20', 'volume_ratio_20',
             'return_3d', 'return_5d', 'return_10d', 'return_20d',
             'sma_50_LogReturn', 'volume_LogReturn',
             'PCA_Trend', 'PCA_Oscillators', 'PCA_MACD', 'PCA_ShortReturns',
             'atr_14', 'high_low', 'market_return', 'foreign_net',
-            'bu', 'sd', 'fs', 'fb'
+            'bu', 'sd', 'fs', 'fb', 'rs', 'rm'
         ]
         
         X_pred = np.array([[float(latest_row[f]) for f in feature_cols_model]])
@@ -335,6 +342,14 @@ def main():
     # Ingest Normalized features
     if norm_rows:
         df_norm = pd.DataFrame(norm_rows)
+        # Explicitly order columns to match daily_normalized_data schema
+        cols_order = [
+            'ticker', 'date', 'close_LogReturn', 'price_vs_sma50', 'volatility_20', 'volume_ratio_20',
+            'return_3d', 'return_5d', 'return_10d', 'return_20d', 'sma_50_LogReturn', 'volume_LogReturn',
+            'PCA_Trend', 'PCA_Oscillators', 'PCA_MACD', 'PCA_ShortReturns', 'atr_14', 'high_low', 'market_return', 
+            'foreign_net', 'bu', 'sd', 'fs', 'fb', 'rs', 'rm'
+        ]
+        df_norm = df_norm[cols_order]
         with engine.connect() as conn_sql:
             print("    Ingesting normalized features...")
             df_norm.to_sql('temp_norm', con=engine, if_exists='replace', index=False)

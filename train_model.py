@@ -33,6 +33,11 @@ try:
     df['_ticker'] = df['ticker']
     df['_date'] = pd.to_datetime(df['date'])
     print(f"    OK Loaded dataset from MySQL database table 'model_training_data'. Total rows: {len(df):,}")
+    # Drop rows with NaN in RRG features
+    if 'rs' in df.columns and 'rm' in df.columns:
+        before_drop = len(df)
+        df = df.dropna(subset=['rs', 'rm'])
+        print(f"    OK Dropped {before_drop - len(df):,} rows with NaN in RRG features. Remaining rows: {len(df):,}")
     loaded_from_db = True
 except Exception as e:
     print(f"    ⚠️ Failed to load from MySQL database: {e}")
@@ -101,14 +106,14 @@ print(f"    OK Phan bo nhan (du bao 5 phien):")
 print(f"      - Tang (1): {class_counts.get(1, 0):,} ({class_counts.get(1, 0)/len(df)*100:.1f}%)")
 print(f"      - Giam (0): {class_counts.get(0, 0):,} ({class_counts.get(0, 0)/len(df)*100:.1f}%)")
 
-# Các cột feature (17 cột, đã bỏ 2 cột leaky, thêm foreign_net)
+# Các cột feature (23 cột, đã bỏ 2 cột leaky, thêm foreign_net, bu, sd, fs, fb và rs, rm)
 feature_cols = [
     'price_vs_sma50', 'volatility_20', 'volume_ratio_20',
     'return_3d', 'return_5d', 'return_10d', 'return_20d',
     'sma_50_LogReturn', 'volume_LogReturn',
     'PCA_Trend', 'PCA_Oscillators', 'PCA_MACD', 'PCA_ShortReturns',
     'atr_14', 'high_low', 'market_return', 'foreign_net',
-    'bu', 'sd', 'fs', 'fb'
+    'bu', 'sd', 'fs', 'fb', 'rs', 'rm'
 ]
 feature_cols = [c for c in feature_cols if c in df.columns]
 print(f"    OK So features (sau khi loai leaky): {len(feature_cols)}")

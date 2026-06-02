@@ -89,16 +89,9 @@ def load_test_data(engine, feature_cols):
     df['date'] = pd.to_datetime(df['date'])
     df = df.sort_values('date').reset_index(drop=True)
     
-    # Compute T+5 target
-    df['close_LogReturn_5d'] = (
-        df.groupby('ticker')['close_LogReturn'].shift(-1) +
-        df.groupby('ticker')['close_LogReturn'].shift(-2) +
-        df.groupby('ticker')['close_LogReturn'].shift(-3) +
-        df.groupby('ticker')['close_LogReturn'].shift(-4) +
-        df.groupby('ticker')['close_LogReturn'].shift(-5)
-    )
-    df = df.dropna(subset=['close_LogReturn_5d'])
-    df['target'] = (df['close_LogReturn_5d'] > 0).astype(int)
+    # Drop rows with NaN in RRG features
+    if 'rs' in df.columns and 'rm' in df.columns:
+        df = df.dropna(subset=['rs', 'rm'])
     
     # Filter for Test set (2025 onwards)
     test_df = df[df['date'] >= '2025-01-01'].copy()
@@ -123,7 +116,7 @@ def backtest_summary():
 
     threshold_offset = request.args.get('threshold_offset', 0.0, type=float)
 
-    X_test = test_df[feature_cols].values
+    X_test = test_df[feature_cols]
     y_true = test_df['target'].values.astype(int)
 
     y_pred = model.predict(X_test).astype(int)
@@ -197,8 +190,8 @@ def backtest_by_ticker():
 
     threshold_offset = request.args.get('threshold_offset', 0.0, type=float)
 
-    test_df['y_pred'] = model.predict(test_df[feature_cols].values).astype(int)
-    test_df['y_proba'] = model.predict_proba(test_df[feature_cols].values)[:, 1]
+    test_df['y_pred'] = model.predict(test_df[feature_cols]).astype(int)
+    test_df['y_proba'] = model.predict_proba(test_df[feature_cols])[:, 1]
 
     # Apply confidence filtering
     if threshold_offset > 0.0:
@@ -246,8 +239,8 @@ def backtest_timeline():
     
     threshold_offset = request.args.get('threshold_offset', 0.0, type=float)
     
-    test_df['y_pred'] = model.predict(test_df[feature_cols].values).astype(int)
-    test_df['y_proba'] = model.predict_proba(test_df[feature_cols].values)[:, 1]
+    test_df['y_pred'] = model.predict(test_df[feature_cols]).astype(int)
+    test_df['y_proba'] = model.predict_proba(test_df[feature_cols])[:, 1]
 
     # Apply confidence filtering
     if threshold_offset > 0.0:
@@ -295,8 +288,8 @@ def backtest_predictions():
             'per_page': per_page,
             'total_pages': 0
         })
-    test_df['y_pred'] = model.predict(test_df[feature_cols].values).astype(int)
-    test_df['y_proba'] = model.predict_proba(test_df[feature_cols].values)[:, 1]
+    test_df['y_pred'] = model.predict(test_df[feature_cols]).astype(int)
+    test_df['y_proba'] = model.predict_proba(test_df[feature_cols])[:, 1]
     
     # Apply confidence filtering
     if threshold_offset > 0.0:
@@ -592,11 +585,11 @@ def backtest_simulate():
         return jsonify({'error': f'Không tìm thấy dữ liệu cho {ticker} ngày {sim_date}'}), 404
 
     row = df_row.iloc[0]
-    X = np.array([[float(row[f]) for f in feature_cols]])
+    X_df = pd.DataFrame([{f: float(row[f]) for f in feature_cols}])
 
     # Predict
-    pred = int(model.predict(X)[0])
-    proba = model.predict_proba(X)[0].tolist()
+    pred = int(model.predict(X_df)[0])
+    proba = model.predict_proba(X_df)[0].tolist()
     prob_up = proba[1]
     prob_down = proba[0]
 
@@ -686,8 +679,8 @@ def backtest_ticker_detail():
     if ticker_df.empty:
         return jsonify({'error': f'Không tìm thấy dữ liệu test cho {ticker}'}), 404
 
-    ticker_df['y_pred'] = model.predict(ticker_df[feature_cols].values).astype(int)
-    ticker_df['y_proba'] = model.predict_proba(ticker_df[feature_cols].values)[:, 1]
+    ticker_df['y_pred'] = model.predict(ticker_df[feature_cols]).astype(int)
+    ticker_df['y_proba'] = model.predict_proba(ticker_df[feature_cols])[:, 1]
 
     # Apply confidence filtering
     if threshold_offset > 0.0:

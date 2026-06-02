@@ -30,6 +30,10 @@ try:
     df['_ticker'] = df['ticker']
     df['_date'] = pd.to_datetime(df['date'])
     print(f"    OK Loaded dataset from MySQL database table 'model_training_data'. Total rows: {len(df):,}")
+    if 'rs' in df.columns and 'rm' in df.columns:
+        before_drop = len(df)
+        df = df.dropna(subset=['rs', 'rm'])
+        print(f"    OK Dropped {before_drop - len(df):,} rows with NaN in RRG features. Remaining rows: {len(df):,}")
     loaded_from_db = True
 except Exception as e:
     print(f"    Failed to load from MySQL database: {e}")
@@ -84,7 +88,7 @@ feature_cols = ['price_vs_sma50','volatility_20','volume_ratio_20',
                 'sma_50_LogReturn','volume_LogReturn',
                 'PCA_Trend','PCA_Oscillators','PCA_MACD','PCA_ShortReturns',
                 'atr_14','high_low','market_return','foreign_net',
-                'bu','sd','fs','fb']
+                'bu','sd','fs','fb','rs','rm']
 feature_cols = [c for c in feature_cols if c in df.columns]
 
 X = df[feature_cols]
