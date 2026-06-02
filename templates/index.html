@@ -1480,26 +1480,46 @@ function showTickerDetail(data) {
     const lastActual = history[history.length - 1];
     const lastPrice = lastActual.close;
     const pUp = data.probability_up;
-    const predPrice = lastPrice * Math.exp((pUp - 0.5) * 0.08);
 
+    // Generate historical labels
     const labels = history.map(h => {
       const parts = h.date.split('-');
       return parts.length === 3 ? `${parts[2]}/${parts[1]}` : h.date;
     });
     
-    let predLabel = 'Dự báo';
-    if (data.predict_date) {
-      const parts = data.predict_date.split('-');
-      predLabel = parts.length === 3 ? `${parts[2]}/${parts[1]}` : data.predict_date;
+    // Generate next 5 business days for future labels
+    const nextDays = [];
+    let lastDate = new Date(lastActual.date);
+    while (nextDays.length < 5) {
+      lastDate.setDate(lastDate.getDate() + 1);
+      const day = lastDate.getDay();
+      if (day !== 0 && day !== 6) { // Skip weekends
+        const dd = String(lastDate.getDate()).padStart(2, '0');
+        const mm = String(lastDate.getMonth() + 1).padStart(2, '0');
+        nextDays.push(`${dd}/${mm}`);
+      }
     }
-    labels.push(predLabel);
+    labels.push(...nextDays);
 
+    // Actual Data: 10 historical prices + null for the next 5 days
     const actualData = history.map(h => h.close);
-    actualData.push(null); // Stop at T
+    for (let k = 0; k < 5; k++) {
+      actualData.push(null);
+    }
 
-    const predData = history.map(() => null);
-    predData[predData.length - 1] = lastPrice; // Start at T
-    predData.push(predPrice); // End at T+5
+    // Prediction Data:
+    // 1. For historical days: C_t * exp((p_t - 0.5) * 0.08)
+    const predData = history.map(h => {
+      const p = h.probability_up !== undefined ? h.probability_up : 0.5;
+      return h.close * Math.exp((p - 0.5) * 0.08);
+    });
+    // 2. Set the cutoff point (index history.length - 1) to lastPrice (actual) so it connects perfectly
+    predData[predData.length - 1] = lastPrice;
+    // 3. Project for the next 5 days: C_T * exp((p_T - 0.5) * 0.08 * (k / 5))
+    for (let k = 1; k <= 5; k++) {
+      const val = lastPrice * Math.exp((pUp - 0.5) * 0.08 * (k / 5));
+      predData.push(val);
+    }
 
     const priceCanvas = document.getElementById('td-price-chart');
     if (priceChart) priceChart.destroy();
@@ -1519,16 +1539,16 @@ function showTickerDetail(data) {
             tension: 0.15
           },
           {
-            label: 'Dự kiến xu hướng T+5 (Predicted)',
+            label: 'Dự báo xu hướng (Predicted)',
             data: predData,
             borderColor: '#ff7c3a',
             backgroundColor: 'transparent',
             borderWidth: 2,
             borderDash: [5, 5],
-            pointRadius: 4,
+            pointRadius: 3,
             pointBackgroundColor: '#ff7c3a',
             fill: false,
-            tension: 0
+            tension: 0.15
           }
         ]
       },

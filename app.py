@@ -223,11 +223,13 @@ def api_ticker_detail(ticker_name):
                 ORDER BY date DESC LIMIT 1
             """), conn, params={'ticker': ticker_upper})
             
-            # Query last 30 trading days of historical raw price data
+            # Query last 10 trading days of historical raw price data along with model predictions
             df_history = pd.read_sql(text("""
-                SELECT date, close FROM daily_raw_data 
-                WHERE ticker = :ticker 
-                ORDER BY date DESC LIMIT 30
+                SELECT r.date, r.close, p.probability_up 
+                FROM daily_raw_data r
+                LEFT JOIN model_predictions p ON r.ticker = p.ticker AND r.date = p.date
+                WHERE r.ticker = :ticker 
+                ORDER BY r.date DESC LIMIT 10
             """), conn, params={'ticker': ticker_upper})
             
         if df_norm.empty or df_pred.empty:
@@ -240,9 +242,13 @@ def api_ticker_detail(ticker_name):
         if not df_history.empty:
             df_history = df_history.iloc[::-1].reset_index(drop=True)
             for _, row in df_history.iterrows():
+                p_up = row['probability_up']
+                if p_up is None or pd.isna(p_up):
+                    p_up = 0.5
                 history_data.append({
                     'date': str(row['date']),
-                    'close': float(row['close'])
+                    'close': float(row['close']),
+                    'probability_up': float(p_up)
                 })
         
         stats = ticker_stats.get(ticker_upper, {})
