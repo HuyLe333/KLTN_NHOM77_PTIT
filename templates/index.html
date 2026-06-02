@@ -716,6 +716,17 @@
                 <div class="tstat-val" id="td-down-n" style="color:#fff">—</div>
               </div>
             </div>
+            
+            <!-- Biểu đồ dự báo giá T+5 -->
+            <div style="margin-top:1.2rem; background:rgba(0,0,0,0.2); border-radius:var(--radius-xs); border:1px solid var(--border); padding:1rem;">
+              <div style="font-size:0.8rem; font-weight:600; color:var(--text-primary); margin-bottom:0.8rem; display:flex; align-items:center; gap:6px;">
+                📈 Biểu đồ xu hướng giá & Dự báo T+5
+              </div>
+              <div style="position:relative; height:250px; width:100%;">
+                <canvas id="td-price-chart"></canvas>
+              </div>
+            </div>
+
             <div style="margin-top:1rem;display:flex;gap:10px">
               <button class="btn-predict" onclick="switchTab('predict')" style="padding:9px 20px;font-size:.82rem">
                 🛠️ Tùy chỉnh thông số (What-if)
@@ -1040,6 +1051,7 @@ let globalMetrics   = null;
 let allTickers      = [];
 let selectedTicker  = null;
 let donutChart      = null;
+let priceChart      = null;
 let defaultFeatureVals = {};
 
 // ═══════════════════════════════════════════════════════════
@@ -1461,6 +1473,105 @@ function showTickerDetail(data) {
       animation:{ duration:600 }
     }
   });
+
+  // Draw price prediction line chart
+  const history = data.history || [];
+  if (history.length > 0) {
+    const lastActual = history[history.length - 1];
+    const lastPrice = lastActual.close;
+    const pUp = data.probability_up;
+    const predPrice = lastPrice * Math.exp((pUp - 0.5) * 0.08);
+
+    const labels = history.map(h => {
+      const parts = h.date.split('-');
+      return parts.length === 3 ? `${parts[2]}/${parts[1]}` : h.date;
+    });
+    
+    let predLabel = 'Dự báo';
+    if (data.predict_date) {
+      const parts = data.predict_date.split('-');
+      predLabel = parts.length === 3 ? `${parts[2]}/${parts[1]}` : data.predict_date;
+    }
+    labels.push(predLabel);
+
+    const actualData = history.map(h => h.close);
+    actualData.push(null); // Stop at T
+
+    const predData = history.map(() => null);
+    predData[predData.length - 1] = lastPrice; // Start at T
+    predData.push(predPrice); // End at T+5
+
+    const priceCanvas = document.getElementById('td-price-chart');
+    if (priceChart) priceChart.destroy();
+    priceChart = new Chart(priceCanvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Giá thực tế (Actual)',
+            data: actualData,
+            borderColor: '#00d4ff',
+            backgroundColor: 'rgba(0, 212, 255, 0.05)',
+            borderWidth: 2,
+            pointRadius: 1.5,
+            fill: false,
+            tension: 0.15
+          },
+          {
+            label: 'Dự kiến xu hướng T+5 (Predicted)',
+            data: predData,
+            borderColor: '#ff7c3a',
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 4,
+            pointBackgroundColor: '#ff7c3a',
+            fill: false,
+            tension: 0
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            labels: { color: '#7a9cc0', font: { size: 10 } }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) label += ': ';
+                if (context.parsed.y !== null) {
+                  label += Math.round(context.parsed.y).toLocaleString('vi-VN') + ' VNĐ';
+                }
+                return label;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#7a9cc0', font: { size: 9 }, maxTicksLimit: 10 },
+            grid: { color: 'rgba(255,255,255,.03)' }
+          },
+          y: {
+            ticks: {
+              color: '#7a9cc0',
+              font: { size: 9 },
+              callback: function(val) {
+                return val.toLocaleString('vi-VN');
+              }
+            },
+            grid: { color: 'rgba(255,255,255,.03)' }
+          }
+        }
+      }
+    });
+  }
 
   const detail = document.getElementById('ticker-detail');
   detail.classList.add('show');

@@ -223,11 +223,27 @@ def api_ticker_detail(ticker_name):
                 ORDER BY date DESC LIMIT 1
             """), conn, params={'ticker': ticker_upper})
             
+            # Query last 30 trading days of historical raw price data
+            df_history = pd.read_sql(text("""
+                SELECT date, close FROM daily_raw_data 
+                WHERE ticker = :ticker 
+                ORDER BY date DESC LIMIT 30
+            """), conn, params={'ticker': ticker_upper})
+            
         if df_norm.empty or df_pred.empty:
             return jsonify({'error': f'Khong tim thay du lieu cho ma {ticker_upper}'}), 404
             
         latest_row = df_norm.iloc[0]
         pred_row = df_pred.iloc[0]
+        
+        history_data = []
+        if not df_history.empty:
+            df_history = df_history.iloc[::-1].reset_index(drop=True)
+            for _, row in df_history.iterrows():
+                history_data.append({
+                    'date': str(row['date']),
+                    'close': float(row['close'])
+                })
         
         stats = ticker_stats.get(ticker_upper, {})
         medians = stats.get('median_features', {})
@@ -297,7 +313,8 @@ def api_ticker_detail(ticker_name):
             'latest_date': str(pred_row['date']),
             'predict_date': str(pred_row['predict_date']),
             'test_accuracy': round(test_accuracy, 4),
-            'predictability': predictability
+            'predictability': predictability,
+            'history': history_data
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
