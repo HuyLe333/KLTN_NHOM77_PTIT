@@ -76,13 +76,16 @@ def main():
     # 5. Filter for Test Set (from 2025-01-01 onwards)
     test_df = df_clean[df_clean['date'] >= '2025-01-01'].copy().dropna(subset=['predicted_close'])
     
+    # Slice to first 20% of test data to zoom in on daily details
+    test_df = test_df.head(int(len(test_df) * 0.20)).copy()
+    
     # 6. Plotting
     plt.figure(figsize=(10, 5.5), dpi=300)
     
     plt.plot(test_df['date'], test_df['close'], label='Dữ liệu cổ phiếu thực tế (Actual)', color='#1f77b4', linewidth=1.8)
     plt.plot(test_df['date'], test_df['predicted_close'], label='Mô hình XGBoost v4 dự đoán (Predicted T+0)', color='#ff7f0e', linewidth=1.5, linestyle='-.')
     
-    plt.title(f'Giá đóng cửa thực tế và dự báo T+0 của cổ phiếu {ticker} (01/2025 - 06/2026)', fontsize=12, fontweight='bold', pad=15)
+    plt.title(f'Chi tiết thực tế và dự báo T+0 cổ phiếu {ticker} (Phóng to 20% dữ liệu Test)', fontsize=12, fontweight='bold', pad=15)
     plt.xlabel('Thời gian', labelpad=10)
     plt.ylabel('Giá đóng cửa (VNĐ)')
     plt.grid(True, linestyle=':', alpha=0.5)
@@ -94,7 +97,7 @@ def main():
     # Create directory if not exists
     os.makedirs('reports/charts', exist_ok=True)
     
-    output_path = 'reports/charts/chart4_price_prediction_t0.png'
+    output_path = 'reports/charts/chart4_price_prediction_t0_zoom.png'
     plt.savefig(output_path, dpi=300)
     plt.close()
     print(f"SUCCESS: Saved price prediction chart to {output_path}")
