@@ -70,11 +70,8 @@ def main():
     scaling_factor = 0.08
     df_clean['expected_log_ret'] = (df_clean['y_proba'] - 0.5) * scaling_factor
     
-    # Predicted close price for day t+5 is Close_t * exp(expected_log_ret)
-    df_clean['predicted_close_t5'] = df_clean['close'] * np.exp(df_clean['expected_log_ret'])
-    
-    # Shift predicted price by 5 days so that the prediction made at t-5 aligns with actual price at t
-    df_clean['predicted_close'] = df_clean['predicted_close_t5'].shift(5)
+    # Predicted close price for day t is Close_t * exp(expected_log_ret) (T+0)
+    df_clean['predicted_close'] = df_clean['close'] * np.exp(df_clean['expected_log_ret'])
     
     # 5. Filter for Test Set (from 2025-01-01 onwards)
     test_df = df_clean[df_clean['date'] >= '2025-01-01'].copy().dropna(subset=['predicted_close'])
@@ -83,9 +80,9 @@ def main():
     plt.figure(figsize=(10, 5.5), dpi=300)
     
     plt.plot(test_df['date'], test_df['close'], label='Dữ liệu cổ phiếu thực tế (Actual)', color='#1f77b4', linewidth=1.8)
-    plt.plot(test_df['date'], test_df['predicted_close'], label='Mô hình XGBoost v4 dự đoán (Predicted T+5)', color='#ff7f0e', linewidth=1.5, linestyle='-.')
+    plt.plot(test_df['date'], test_df['predicted_close'], label='Mô hình XGBoost v4 dự đoán (Predicted T+0)', color='#ff7f0e', linewidth=1.5, linestyle='-.')
     
-    plt.title(f'Giá đóng cửa thực tế và dự báo T+5 của cổ phiếu {ticker} (01/2025 - 06/2026)', fontsize=12, fontweight='bold', pad=15)
+    plt.title(f'Giá đóng cửa thực tế và dự báo T+0 của cổ phiếu {ticker} (01/2025 - 06/2026)', fontsize=12, fontweight='bold', pad=15)
     plt.xlabel('Thời gian', labelpad=10)
     plt.ylabel('Giá đóng cửa (VNĐ)')
     plt.grid(True, linestyle=':', alpha=0.5)
