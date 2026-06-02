@@ -94,7 +94,7 @@ def main():
     # Create directory if not exists
     os.makedirs('reports/charts', exist_ok=True)
     
-    output_path = 'reports/charts/chart4_price_prediction.png'
+    output_path = 'reports/charts/chart4_price_prediction_t0.png'
     plt.savefig(output_path, dpi=300)
     plt.close()
     print(f"SUCCESS: Saved price prediction chart to {output_path}")
