@@ -1,0 +1,15 @@
+Line 532: <label for="select-eval-confidence" style="font-size:0.75rem; color:var(--text-secondary); font-weight:600; white-space:
+Line 533: <select id="select-eval-confidence" onchange="onEvalConfidenceChange(this.value)" style="background:var(--bg-secondary);
+Line 715: <div class="tstat-lbl">Độ tin cậy</div>
+Line 1060: async function onMainThresholdChange() {
+Line 1068: const offset = document.getElementById('main-threshold-offset')?.value || '0.00';
+Line 1069: const res = await fetch(`/api/tickers?threshold_offset=${offset}`);
+Line 1079: const offset = document.getElementById('main-threshold-offset')?.value || '0.00';
+Line 1082: fetch(`/api/tickers?threshold_offset=${offset}`)
+Line 1254: function onEvalConfidenceChange(val) {
+Line 1258: if (val !== "0.0" && globalMetrics.threshold_metrics && globalMetrics.threshold_metrics[val]) {
+Line 1259: targetMetrics = globalMetrics.threshold_metrics[val];
+Line 1455: document.getElementById('td-down-n').textContent  = (data.confidence * 100).toFixed(1) + '%';
+Line 1789: Độ tin cậy: <strong style="color:#fff">${(r.confidence*100).toFixed(1)}%</strong></span>`;
+Line 1830: <strong>Giải thích nguyên nhân:</strong> Đặc tính kỹ thuật của mã này có độ nhiễu cao. Hành vi cung cầu đơn lẻ của các đ
+Line 1847: <strong style="color: var(--accent-cyan);">Khuyến nghị từ hệ thống:</strong> Tín hiệu của mã này có <strong>ĐỘ TIN CẬY C

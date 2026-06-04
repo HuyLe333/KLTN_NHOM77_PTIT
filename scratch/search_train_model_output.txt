@@ -1,0 +1,16 @@
+Line 124: ticker_stats = {}
+Line 137: ticker_stats[t] = {
+Line 147: print(f"    OK Da tinh stats cho {len(ticker_stats)} ma")
+Line 220: if t in ticker_stats:
+Line 221: ticker_stats[t]['test_accuracy'] = round(float(ta), 4)
+Line 222: ticker_stats[t]['test_samples'] = int(len(t_sub))
+Line 225: ticker_stats[t]['predictability'] = 'high'
+Line 227: ticker_stats[t]['predictability'] = 'low'
+Line 229: ticker_stats[t]['predictability'] = 'medium'
+Line 231: if t in ticker_stats:
+Line 232: ticker_stats[t]['test_accuracy'] = 0.0
+Line 233: ticker_stats[t]['test_samples'] = 0
+Line 234: ticker_stats[t]['predictability'] = 'low'
+Line 375: with open('ticker_stats.json', 'w', encoding='utf-8') as f:
+Line 376: json.dump(ticker_stats, f, ensure_ascii=False, indent=2)
+Line 380: print("    OK Da luu: ticker_stats.json")

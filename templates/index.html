@@ -671,6 +671,18 @@
                 placeholder="Tìm kiếm mã cổ phiếu (VD: FPT, VNM, HPG...)"
                 oninput="filterTickers(this.value)"/>
             </div>
+            <div style="display:flex; align-items:center; gap:8px; background:var(--bg-card); border:1px solid var(--border); padding:6px 12px; border-radius:var(--radius-sm);">
+              <label for="select-predict-confidence" style="font-size:0.75rem; color:var(--text-secondary); font-weight:600; white-space:nowrap;">Bộ lọc tự tin:</label>
+              <select id="select-predict-confidence" onchange="onPredictConfidenceChange(this.value)" style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-xs); color:var(--text-primary); font-size:0.78rem; outline:none; padding:4px 8px; font-family:'JetBrains Mono',monospace; cursor:pointer;">
+                <option value="0.0" selected>Tất cả (0%)</option>
+                <option value="0.05">≥ 5% (Xác suất ≤ 47.5% hoặc ≥ 52.5%)</option>
+                <option value="0.1">≥ 10% (Xác suất ≤ 45% hoặc ≥ 55%)</option>
+                <option value="0.15">≥ 15% (Xác suất ≤ 42.5% hoặc ≥ 57.5%)</option>
+                <option value="0.2">≥ 20% (Xác suất ≤ 40% hoặc ≥ 60%)</option>
+                <option value="0.25">≥ 25% (Xác suất ≤ 37.5% hoặc ≥ 62.5%)</option>
+                <option value="0.3">≥ 30% (Xác suất ≤ 35% hoặc ≥ 65%)</option>
+              </select>
+            </div>
           </div>
 
           <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:.7rem">
@@ -1057,26 +1069,14 @@ let defaultFeatureVals = {};
 // ═══════════════════════════════════════════════════════════
 //  BOOT
 // ═══════════════════════════════════════════════════════════
-async function onMainThresholdChange() {
-  selectedTicker = null;
-  document.querySelectorAll('.ticker-btn').forEach(b => b.classList.remove('selected'));
-  const detailPanel = document.getElementById('ticker-detail');
-  if (detailPanel) detailPanel.classList.remove('show');
-  const resResult = document.getElementById('predict-result');
-  if (resResult) resResult.style.display = 'none';
-
-  const offset = document.getElementById('main-threshold-offset')?.value || '0.00';
-  const res = await fetch(`/api/tickers?threshold_offset=${offset}`);
-  allTickers = await res.json();
-  renderTickerGrid(allTickers);
-  renderPortfolioTickerSelectors();
-  if (document.getElementById('panel-top10').classList.contains('active')) {
-    renderTop10();
-  }
+async function onPredictConfidenceChange(val) {
+  const evalSelect = document.getElementById('select-eval-confidence');
+  if (evalSelect) evalSelect.value = val;
+  await onEvalConfidenceChange(val);
 }
 
 async function boot() {
-  const offset = document.getElementById('main-threshold-offset')?.value || '0.00';
+  const offset = document.getElementById('select-eval-confidence')?.value || '0.0';
   const [mRes, tRes] = await Promise.all([
     fetch('/api/metrics'),
     fetch(`/api/tickers?threshold_offset=${offset}`)
@@ -1251,7 +1251,13 @@ function renderClassReport(m) {
   document.getElementById('rs1').textContent = fmt(r.class_1.support);
 }
 
-function onEvalConfidenceChange(val) {
+async function onEvalConfidenceChange(val) {
+  // Sync prediction confidence selector if it exists
+  const predSelect = document.getElementById('select-predict-confidence');
+  if (predSelect && predSelect.value !== val) {
+    predSelect.value = val;
+  }
+
   if (!globalMetrics) return;
   
   let targetMetrics = globalMetrics;
@@ -1306,6 +1312,35 @@ function onEvalConfidenceChange(val) {
   document.getElementById('rr1').textContent = pct(r.class_1.recall);
   document.getElementById('rf1').textContent = pct(r.class_1.f1_score);
   document.getElementById('rs1').textContent = fmt(cm[1][0] + cm[1][1]);
+
+  // Reload tickers dynamically from backend
+  try {
+    const res = await fetch(`/api/tickers?threshold_offset=${val}`);
+    allTickers = await res.json();
+    
+    // Reset search filter input to let all new filtered tickers display
+    const searchVal = document.getElementById('ticker-search')?.value || '';
+    filterTickers(searchVal);
+    
+    renderPortfolioTickerSelectors();
+    if (document.getElementById('panel-top10').classList.contains('active')) {
+      renderTop10();
+    }
+
+    // Refresh details modal with dynamic predictability rating for selected offset
+    if (selectedTicker) {
+      const resDet = await fetch(`/api/ticker/${selectedTicker}?threshold_offset=${val}`);
+      if (resDet.ok) {
+        const dataDet = await resDet.ok ? await resDet.json() : null;
+        if (dataDet) {
+          showTickerDetail(dataDet);
+          showResult(dataDet);
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Error updating dynamic ticker data:", err);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1424,7 +1459,8 @@ async function selectTicker(ticker) {
   selectedTicker = ticker;
 
   // Load detail (which now includes dynamic predictions & SHAP values)
-  const res  = await fetch('/api/ticker/' + ticker);
+  const offset = document.getElementById('select-eval-confidence')?.value || '0.0';
+  const res  = await fetch(`/api/ticker/${ticker}?threshold_offset=${offset}`);
   const data = await res.json();
   showTickerDetail(data);
   
@@ -1934,7 +1970,11 @@ function renderPortfolioTickerSelectors() {
   const container = document.getElementById('portfolio-ticker-selects');
   if (!container) return;
   
-  const preSelected = ['FPT', 'HPG', 'VCB', 'VNM', 'SSI', 'ACB'];
+  // Read currently checked tickers to preserve selection
+  const checkedBoxes = document.querySelectorAll('input[name="portfolio-tickers"]:checked');
+  const currentlyChecked = Array.from(checkedBoxes).map(cb => cb.value);
+  
+  const preSelected = currentlyChecked.length > 0 ? currentlyChecked : ['FPT', 'HPG', 'VCB', 'VNM', 'SSI', 'ACB'];
   
   container.innerHTML = allTickers.map(t => {
     const isChecked = preSelected.includes(t.ticker) ? 'checked' : '';

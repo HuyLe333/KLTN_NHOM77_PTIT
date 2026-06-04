@@ -1,0 +1,4 @@
+Line 651: <div class="sec-title">Chọn Mã Cổ Phiếu & Dự Đoán</div>
+Line 656: <button class="ptab active" id="tab-ticker" onclick="switchTab('ticker')">🏦 Chọn Mã Cổ Phiếu</button>
+Line 657: <button class="ptab"        id="tab-top10"  onclick="switchTab('top10')">🏆 Top 10 Tín Hiệu</button>
+Line 658: <button class="ptab"        id="tab-portfolio" onclick="switchTab('portfolio')">💼 Tối Ưu Danh Mục</button>

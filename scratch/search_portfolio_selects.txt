@@ -1,0 +1,2 @@
+Line 879: <div id="portfolio-ticker-selects" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;max-height:180px;overflow-y
+Line 1934: const container = document.getElementById('portfolio-ticker-selects');

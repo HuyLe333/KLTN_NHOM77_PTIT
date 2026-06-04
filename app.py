@@ -54,7 +54,8 @@ _cached_resources = {
     'explainer': None,
     'mtime_model': 0,
     'mtime_metrics': 0,
-    'mtime_features': 0
+    'mtime_features': 0,
+    'validation_predictions': None
 }
 
 def load_resources():
@@ -115,6 +116,42 @@ def load_resources():
                 print("Loaded ticker stats from MySQL successfully.")
             except Exception as ex:
                 print(f"Failed to query MySQL: {ex}")
+
+    # Load and cache validation predictions
+    if _cached_resources.get('validation_predictions') is None:
+        try:
+            model = _cached_resources['model']
+            feature_cols = _cached_resources['feature_cols']
+            if model is not None and feature_cols:
+                print("Loading validation predictions from MySQL...")
+                engine = create_engine(f"mysql+mysqlconnector://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}")
+                
+                cols_to_select = ['ticker', 'target'] + feature_cols
+                cols_str = ", ".join(cols_to_select)
+                
+                df_val = pd.read_sql(text(f"""
+                    SELECT {cols_str} 
+                    FROM model_training_data 
+                    WHERE date >= '2025-01-01'
+                """), engine)
+                
+                df_val = df_val.dropna(subset=['rs', 'rm']).reset_index(drop=True)
+                
+                if not df_val.empty:
+                    X_test = df_val[feature_cols]
+                    y_proba = model.predict_proba(X_test)[:, 1]
+                    y_pred = (y_proba >= 0.5).astype(int)
+                    
+                    val_preds = pd.DataFrame({
+                        'ticker': df_val['ticker'],
+                        'target': df_val['target'].astype(int),
+                        'y_pred': y_pred,
+                        'y_proba': y_proba
+                    })
+                    _cached_resources['validation_predictions'] = val_preds
+                    print(f"Successfully cached {len(val_preds)} validation predictions.")
+        except Exception as e:
+            print(f"Error caching validation predictions: {e}")
             
     return (
         _cached_resources['model'],
@@ -123,6 +160,47 @@ def load_resources():
         _cached_resources['ticker_stats'],
         _cached_resources['explainer']
     )
+
+
+def calculate_dynamic_ticker_stats(threshold_offset=0.0):
+    global _cached_resources
+    # Ensure resources are loaded
+    load_resources()
+    val_preds = _cached_resources.get('validation_predictions')
+    
+    if val_preds is None or val_preds.empty:
+        return {}
+        
+    df_filtered = val_preds
+    if threshold_offset > 0.0:
+        df_filtered = df_filtered[
+            (df_filtered['y_proba'] <= 0.5 - threshold_offset) | 
+            (df_filtered['y_proba'] >= 0.5 + threshold_offset)
+        ]
+        
+    dynamic_stats = {}
+    for ticker, grp in df_filtered.groupby('ticker'):
+        y_true = grp['target'].values
+        y_pred = grp['y_pred'].values
+        total = len(y_true)
+        if total > 0:
+            acc = float((y_true == y_pred).sum()) / total
+            if acc >= 0.53:
+                pred_class = 'high'
+            elif acc < 0.50:
+                pred_class = 'low'
+            else:
+                pred_class = 'medium'
+        else:
+            acc = 0.5
+            pred_class = 'medium'
+            
+        dynamic_stats[ticker] = {
+            'accuracy': acc,
+            'predictability': pred_class,
+            'samples': total
+        }
+    return dynamic_stats
 
 
 @app.route('/')
@@ -147,6 +225,7 @@ def api_tickers():
     threshold_offset = request.args.get('threshold_offset', default=0.0, type=float)
         
     try:
+        dynamic_stats = calculate_dynamic_ticker_stats(threshold_offset)
         engine = create_engine(f"mysql+mysqlconnector://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}")
         with engine.connect() as conn:
             df_pred = pd.read_sql("""
@@ -176,8 +255,10 @@ def api_tickers():
             stats = ticker_stats.get(ticker, {})
             medians = stats.get('median_features', {})
             total_samples = stats.get('total_samples', 0)
-            test_accuracy = stats.get('test_accuracy', 0.51)
-            predictability = stats.get('predictability', 'medium')
+            
+            dyn = dynamic_stats.get(ticker, {})
+            test_accuracy = dyn.get('accuracy', stats.get('test_accuracy', 0.51))
+            predictability = dyn.get('predictability', stats.get('predictability', 'medium'))
             
             results.append({
                 'ticker': ticker,
@@ -205,6 +286,7 @@ def api_ticker_detail(ticker_name):
     """Trả về thông tin dự báo AI và SHAP của một mã dựa trên phiên giao dịch mới nhất từ MySQL"""
     model, _, feature_cols, ticker_stats, explainer = load_resources()
     ticker_upper = ticker_name.upper()
+    threshold_offset = request.args.get('threshold_offset', default=0.0, type=float)
     
     try:
         engine = create_engine(f"mysql+mysqlconnector://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}")
@@ -223,13 +305,18 @@ def api_ticker_detail(ticker_name):
                 ORDER BY date DESC LIMIT 1
             """), conn, params={'ticker': ticker_upper})
             
-            # Query last 10 trading days of historical raw price data along with model predictions
+            # Query last 10 trading days of historical raw price data
             df_history = pd.read_sql(text("""
-                SELECT r.date, r.close, p.probability_up 
-                FROM daily_raw_data r
-                LEFT JOIN model_predictions p ON r.ticker = p.ticker AND r.date = p.date
-                WHERE r.ticker = :ticker 
-                ORDER BY r.date DESC LIMIT 10
+                SELECT date, close FROM daily_raw_data 
+                WHERE ticker = :ticker 
+                ORDER BY date DESC LIMIT 10
+            """), conn, params={'ticker': ticker_upper})
+
+            # Query last 10 trading days of historical normalized features
+            df_norm_hist = pd.read_sql(text("""
+                SELECT * FROM daily_normalized_data 
+                WHERE ticker = :ticker 
+                ORDER BY date DESC LIMIT 10
             """), conn, params={'ticker': ticker_upper})
             
         if df_norm.empty or df_pred.empty:
@@ -238,15 +325,33 @@ def api_ticker_detail(ticker_name):
         latest_row = df_norm.iloc[0]
         pred_row = df_pred.iloc[0]
         
+        # Calculate historical probabilities dynamically using XGBoost model
+        pred_dict = {}
+        if not df_norm_hist.empty:
+            stats = ticker_stats.get(ticker_upper, {})
+            medians = stats.get('median_features', {})
+            X_df = df_norm_hist.copy()
+            for f in feature_cols:
+                if f not in X_df.columns:
+                    X_df[f] = medians.get(f, 0.0)
+                else:
+                    X_df[f] = X_df[f].fillna(medians.get(f, 0.0))
+            X_matrix = X_df[feature_cols]
+            try:
+                probs = model.predict_proba(X_matrix)[:, 1]
+                for idx, row in df_norm_hist.iterrows():
+                    pred_dict[str(row['date'])] = float(probs[idx])
+            except Exception as e:
+                print(f"Error predicting historical probabilities: {e}")
+        
         history_data = []
         if not df_history.empty:
             df_history = df_history.iloc[::-1].reset_index(drop=True)
             for _, row in df_history.iterrows():
-                p_up = row['probability_up']
-                if p_up is None or pd.isna(p_up):
-                    p_up = 0.5
+                date_str = str(row['date'])
+                p_up = pred_dict.get(date_str, 0.5)
                 history_data.append({
-                    'date': str(row['date']),
+                    'date': date_str,
                     'close': float(row['close']),
                     'probability_up': float(p_up)
                 })
@@ -302,8 +407,11 @@ def api_ticker_detail(ticker_name):
             shap_explanations.sort(key=lambda x: abs(x['shap_value']), reverse=True)
             
         total_samples = stats.get('total_samples', 0)
-        test_accuracy = stats.get('test_accuracy', 0.51)
-        predictability = stats.get('predictability', 'medium')
+        
+        dynamic_stats = calculate_dynamic_ticker_stats(threshold_offset)
+        dyn = dynamic_stats.get(ticker_upper, {})
+        test_accuracy = dyn.get('accuracy', stats.get('test_accuracy', 0.51))
+        predictability = dyn.get('predictability', stats.get('predictability', 'medium'))
         
         return jsonify({
             'ticker': ticker_upper,
@@ -415,54 +523,99 @@ def api_portfolio_optimize():
         return jsonify({'error': 'Không đủ mã cổ phiếu hợp lệ trong cơ sở dữ liệu.'}), 400
         
     try:
-        # 1. Load historical training returns from MySQL instead of data2.xlsx
         engine = create_engine(f"mysql+mysqlconnector://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}")
-        tickers_str = ", ".join([f"'{t}'" for t in valid_tickers])
+        
+        # 1. Fetch latest predictions to filter out tickers with predicted decrease (prob_up < 0.5)
+        latest_preds = {}
         with engine.connect() as conn:
-            df_sel = pd.read_sql(text(f"""
-                SELECT ticker, date, close_LogReturn 
-                FROM model_training_data 
-                WHERE ticker IN ({tickers_str})
-            """), conn)
+            for t in valid_tickers:
+                res_pred = conn.execute(text("""
+                    SELECT probability_up 
+                    FROM model_predictions 
+                    WHERE ticker = :ticker 
+                    ORDER BY date DESC LIMIT 1
+                """), {'ticker': t}).fetchone()
+                if res_pred:
+                    latest_preds[t] = float(res_pred[0])
+                else:
+                    latest_preds[t] = 0.5
+                    
+        # Filter: Only keep tickers with probability_up >= 0.5 (predicted Up/Buy)
+        ai_buy_tickers = [t for t in valid_tickers if latest_preds[t] >= 0.5]
+        
+        if len(ai_buy_tickers) < 2:
+            all_down_tickers = [t for t in valid_tickers if latest_preds[t] < 0.5]
+            down_tickers_str = ", ".join(all_down_tickers)
+            return jsonify({
+                'error': f"Không đủ mã cổ phiếu có dự báo tăng trưởng từ AI để tối ưu (cần tối thiểu 2 mã). Các mã đã chọn bị AI dự báo giảm: {down_tickers_str}. Vui lòng chọn thêm các mã khác."
+            }), 400
+            
+        valid_tickers = ai_buy_tickers
+        
+        # 2. Load historical raw close prices for selected tickers (last 252 sessions) from daily_raw_data
+        dfs = []
+        with engine.connect() as conn:
+            for t in valid_tickers:
+                df_t = pd.read_sql(text("""
+                    SELECT ticker, date, close 
+                    FROM daily_raw_data 
+                    WHERE ticker = :ticker 
+                    ORDER BY date DESC LIMIT 252
+                """), conn, params={'ticker': t})
+                dfs.append(df_t)
+        
+        df_sel = pd.concat(dfs, ignore_index=True)
         
         if df_sel.empty:
             return jsonify({'error': 'Không thể tải dữ liệu lịch sử cho các mã cổ phiếu đã chọn.'}), 500
             
-        pivot_df = df_sel.pivot(index='date', columns='ticker', values='close_LogReturn')
-        # Drop columns with all NaN or fill them
-        pivot_df = pivot_df.dropna(how='all').fillna(0.0)
+        # Sort values chronologically to compute daily returns
+        df_sel = df_sel.sort_values(['ticker', 'date'])
+        df_sel['return'] = df_sel.groupby('ticker')['close'].pct_change()
+        
+        pivot_df = df_sel.pivot(index='date', columns='ticker', values='return')
+        # Drop rows where all elements are NaN, then forward fill and fill remaining with 0.0
+        pivot_df = pivot_df.dropna(how='all').ffill().fillna(0.0)
         
         # Clip outliers to [-0.15, 0.15] to prevent splits/adjustment anomalies
         pivot_df = pivot_df.clip(-0.15, 0.15)
         
-        # Convert log returns to simple returns
-        returns = np.exp(pivot_df) - 1
+        # Compute mean and covariance matrix (Annualized)
+        mean_returns = pivot_df.mean() * 252
+        cov_matrix = pivot_df.cov() * 252
         
-        # Compute mean and covariance matrix
-        mean_returns = returns.mean() * 252 # Annualized
-        cov_matrix = returns.cov() * 252 # Annualized
-        
-        # 2. Get AI predictions for selected tickers to adjust returns
         adjusted_returns = mean_returns.copy()
         ticker_details_map = {}
         
         for t in valid_tickers:
-            stats = ticker_stats[t]
-            medians = stats.get('median_features', {})
-            values = []
-            for f in feature_cols:
-                val = medians.get(f, 0.0)
-                if val is None or pd.isna(val):
-                    val = 0.0
-                values.append(float(val))
-            X = np.array([values])
-            proba = model.predict_proba(X)[0].tolist()
-            prob_up = proba[1]
-            
+            prob_up = latest_preds[t]
             # Adjust expected return: E(R) = historical + 0.3 * (prob_up - 0.5)
             adjusted_returns[t] = mean_returns[t] + 0.3 * (prob_up - 0.5)
             
-            # Store predictions & SHAP values for narrative generation
+            # Fetch latest normalized features from daily_normalized_data to calculate dynamic SHAP values
+            with engine.connect() as conn:
+                df_norm_t = pd.read_sql(text("""
+                    SELECT * FROM daily_normalized_data 
+                    WHERE ticker = :ticker 
+                    ORDER BY date DESC LIMIT 1
+                """), conn, params={'ticker': t})
+                
+            if not df_norm_t.empty:
+                latest_row = df_norm_t.iloc[0]
+                values = []
+                for f in feature_cols:
+                    val = latest_row.get(f)
+                    if val is None or pd.isna(val):
+                        val = ticker_stats[t].get('median_features', {}).get(f, 0.0)
+                        if val is None or pd.isna(val):
+                            val = 0.0
+                    values.append(float(val))
+                X = np.array([values])
+            else:
+                medians = ticker_stats[t].get('median_features', {})
+                values = [float(medians.get(f, 0.0)) for f in feature_cols]
+                X = np.array([values])
+                
             shap_explanations = []
             if explainer is not None:
                 shap_vals = explainer.shap_values(X)[0]
@@ -531,7 +684,7 @@ def api_portfolio_optimize():
         opt_volatility = results_arr[idx, 1]
         opt_sharpe = results_arr[idx, 2]
         
-        # 5. Fetch actual latest prices from MySQL instead of hardcoding or hashing
+        # 5. Fetch actual latest prices from MySQL
         prices = {}
         try:
             tickers_str = ", ".join([f"'{t}'" for t in valid_tickers])
@@ -554,22 +707,59 @@ def api_portfolio_optimize():
         def get_ticker_price(ticker):
             if ticker in prices:
                 return prices[ticker]
-            # fallback
             return 20000.0
             
-        holdings = []
+        # Greedy Rounded Portfolio Allocation (Lot size 100)
+        holdings_raw = []
         total_allocated = 0.0
         
+        # Calculate initial floor lots (making sure we don't exceed capital)
         for t, w in zip(valid_tickers, opt_weights):
             price = get_ticker_price(t)
             target_value = capital * w
-            
-            qty = round(target_value / price / 100) * 100
+            qty = int(np.floor(target_value / price / 100) * 100)
             actual_value = qty * price
             
-            detail = ticker_details_map[t]
+            holdings_raw.append({
+                'ticker': t,
+                'price': price,
+                'target_weight': w,
+                'quantity': qty,
+                'allocated_amount': actual_value
+            })
+            total_allocated += actual_value
+            
+        # Greedy loop: allocate remaining cash one lot of 100 shares at a time
+        remaining_cash = capital - total_allocated
+        while True:
+            eligible = []
+            for h in holdings_raw:
+                cost_of_lot = h['price'] * 100
+                if cost_of_lot <= remaining_cash:
+                    # Calculate weight deficit: target_weight - actual_weight
+                    current_weight = h['allocated_amount'] / capital
+                    deficit = h['target_weight'] - current_weight
+                    eligible.append((deficit, h))
+            
+            if not eligible:
+                break
+                
+            # Sort by deficit descending (largest deficit first)
+            eligible.sort(key=lambda x: x[0], reverse=True)
+            best_choice = eligible[0][1]
+            
+            best_choice['quantity'] += 100
+            best_choice['allocated_amount'] += best_choice['price'] * 100
+            remaining_cash -= best_choice['price'] * 100
+            total_allocated += best_choice['price'] * 100
+            
+        # Prepare final holdings format for frontend response
+        holdings = []
+        for h in holdings_raw:
+            detail = ticker_details_map[h['ticker']]
             p_up = detail['prob_up']
             shaps = detail['shap']
+            w = h['target_weight']
             
             narrative = f"Phân bổ {w*100:.1f}% danh mục. "
             if w > 0.05:
@@ -583,15 +773,14 @@ def api_portfolio_optimize():
                 narrative += f"Hạn chế tỷ trọng tối đa để giảm thiểu rủi ro cho danh mục chung."
                 
             holdings.append({
-                'ticker': t,
-                'price': price,
+                'ticker': h['ticker'],
+                'price': h['price'],
                 'target_weight': round(float(w) * 100, 2),
                 'actual_weight': 0.0,
-                'quantity': int(qty),
-                'allocated_amount': float(actual_value),
+                'quantity': h['quantity'],
+                'allocated_amount': float(h['allocated_amount']),
                 'xai_explanation': narrative
             })
-            total_allocated += actual_value
             
         for h in holdings:
             h['actual_weight'] = round((h['allocated_amount'] / total_allocated * 100), 2) if total_allocated > 0 else 0.0

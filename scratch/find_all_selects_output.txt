@@ -1,0 +1,2 @@
+Line 533: <select id="select-eval-confidence" onchange="onEvalConfidenceChange(this.value)" style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-xs); color:var(--text-primary); font-size:0.78rem; outline:none; padding:4px 8px; font-family:'JetBrains Mono',monospace; cursor:pointer;">
+Line 1943: <input type="checkbox" name="portfolio-tickers" value="${t.ticker}" ${isChecked} style="cursor:pointer;" onchange="updatePortfolioSelectedCount()"/>

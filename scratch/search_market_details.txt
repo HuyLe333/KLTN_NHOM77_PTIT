@@ -1,0 +1,7 @@
+
+Checking file: app.py
+Line 730: f"<strong>{total_allocated:,.0f} VND</strong> vào các cổ phiếu được chọn và giữ lại <strong>{cash_left:,.0f} VND</strong
+
+Checking file: templates/index.html
+Line 932: 📊 Chi Tiết Phân Bổ Nguồn Vốn (Làm Tròn Lô 100 HOSE)
+Line 1845: <strong>Đặc tính kỹ thuật:</strong> Mô hình AI tìm thấy các mối tương quan chặt chẽ giữa dòng tiền khối ngoại (foreign_n

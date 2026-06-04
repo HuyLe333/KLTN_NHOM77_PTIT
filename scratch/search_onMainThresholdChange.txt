@@ -1,0 +1,7 @@
+Line 1060: async function onMainThresholdChange() {
+Line 1068: const offset = document.getElementById('main-threshold-offset')?.value || '0.00';
+Line 1069: const res = await fetch(`/api/tickers?threshold_offset=${offset}`);
+Line 1079: const offset = document.getElementById('main-threshold-offset')?.value || '0.00';
+Line 1082: fetch(`/api/tickers?threshold_offset=${offset}`)
+Line 1258: if (val !== "0.0" && globalMetrics.threshold_metrics && globalMetrics.threshold_metrics[val]) {
+Line 1259: targetMetrics = globalMetrics.threshold_metrics[val];

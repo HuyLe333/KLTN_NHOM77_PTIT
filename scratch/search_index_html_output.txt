@@ -1,0 +1,7 @@
+Searching for 'universe'...
+Line 1380: extraBadge = `<span style="font-size:0.55rem; background:rgba(0, 232, 122, 0.15); color:#00e87a; pad
+Line 1825: ⚠️ CẢNH BÁO: CỔ PHIẾU CÓ ĐỘ NHIỄU CAO (UNIVERSE C)
+Line 1840: ⭐ CỔ PHIẾU DỄ DỰ BÁO (UNIVERSE B - HIGH PREDICTABILITY)
+
+Searching for '<select' or markets...
+Line 1845: <strong>Đặc tính kỹ thuật:</strong> Mô hình AI tìm thấy các mối tương quan chặt chẽ giữa dòng tiền k

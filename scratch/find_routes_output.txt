@@ -1,0 +1,24 @@
+Line 128: @app.route('/')
+  def index():
+  _, metrics, _, _, _ = load_resources()
+  return render_template('index.html', metrics=metrics)
+Line 134: @app.route('/api/metrics')
+  def api_metrics():
+  _, metrics, _, _, _ = load_resources()
+  return jsonify(metrics)
+Line 140: @app.route('/api/tickers')
+  def api_tickers():
+  """Trả về danh sách tất cả mã cổ phiếu kèm theo dự báo AI mới nhất từ MySQL"""
+  model, _, feature_cols, ticker_stats, _ = load_resources()
+Line 203: @app.route('/api/ticker/<ticker_name>')
+  def api_ticker_detail(ticker_name):
+  """Trả về thông tin dự báo AI và SHAP của một mã dựa trên phiên giao dịch mới nhất từ MySQL"""
+  model, _, feature_cols, ticker_stats, explainer = load_resources()
+Line 352: @app.route('/api/predict', methods=['POST'])
+  def predict():
+  model, metrics, feature_cols, _, explainer = load_resources()
+  if model is None:
+Line 417: @app.route('/api/portfolio/optimize', methods=['POST'])
+  def api_portfolio_optimize():
+  model, _, feature_cols, ticker_stats, explainer = load_resources()
+  if model is None:

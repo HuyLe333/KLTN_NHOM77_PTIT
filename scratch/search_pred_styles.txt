@@ -1,0 +1,5 @@
+Line 468: .low-pred-ticker {
+Line 474: .low-pred-ticker:hover {
+Line 479: .high-pred-ticker {
+Line 1376: extraClass = 'low-pred-ticker';
+Line 1379: extraClass = 'high-pred-ticker';
